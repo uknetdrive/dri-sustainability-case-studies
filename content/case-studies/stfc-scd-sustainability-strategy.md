@@ -61,7 +61,7 @@ sources:
 #     url: "https://example.org/page"
 
 # Set true to keep this out of the published site while you draft.
-draft: true
+draft: false
 draftId: "b62g7tdz8b"
 ---
 
