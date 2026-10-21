@@ -1,3 +1,5 @@
+
+
 ---
 # ─────────────────────────────────────────────────────────────────────────────
 # Copy this file to content/case-studies/your-article-name.md and edit it.
@@ -82,6 +84,8 @@ SCD has had an Energy Efficiency Team (EET) since 2022, operating as a voluntary
 ## What We Did
 
 In 2025, we presented a case to the department for a long-term strategy and the need for financial backing. Our approach was to use the broad principles of the UKRI and STFC strategies, identify what was in and out of scope, and create a record of all past and current sustainability work in the department. From this, we came up with four general themes:
+
+<img width="1385" height="748" alt="Screenshot from 2026-10-21 13-45-53" src="https://github.com/user-attachments/assets/0e6f8e70-cc4d-436d-88f3-1c2c93c36432" />
 
 ### Emissions Monitoring Across SCD Services (Our HPC and Cloud Systems)
 Users should be able to measure their carbon emissions on all of our services to understand the environmental cost of their work. SCD has graduate and apprentice schemes that run 6-month projects. As the department Energy Efficiency Team, we designed and supervised projects to achieve this. For our HPC systems, @GeorgeRoe developed [GUILT](https://github.com/SCD-Energy-Efficiency-Team/guilt), a Rust-based command line tool for calculating the carbon emissions of SLURM jobs. @jamesravindran built on this by [analysing the potential benefits of implementing green scheduling](https://github.com/SCD-Energy-Efficiency-Team/carbon-scheduling-lotus) on our HPC services, concluding it is worth implementing on some but not others, based on utilisation levels. For our cloud services, @Dronesat developed [a prototype dashboard](https://github.com/SCD-Energy-Efficiency-Team/stfc-cloud-energy-analysis), enabling users to calculate the carbon emissions of their virtual machines using different models. Methods for displaying this to users on platforms that sit on top of our cloud services were then implemented by @prodmodfour. 
