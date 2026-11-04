@@ -2,7 +2,7 @@
  * Central site configuration.
  */
 
-export const GITHUB_OWNER = 'SCD-Energy-Efficiency-Team';
+export const GITHUB_OWNER = 'uknetdrive';
 
 export const GITHUB_REPO = 'dri-sustainability-case-studies';
 
