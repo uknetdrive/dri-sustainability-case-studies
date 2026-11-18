@@ -3,34 +3,11 @@ import Base from '../layouts/Base.astro';
 import { ROLES } from '../lib/taxonomy';
 import { url } from '../lib/url';
 import { REPO_URL } from '../site.config';
-
-const template = `---
-title: "Example title"
-description: "Short description"
-roles:
-  - software-engineer
-tags:
-  - cpp
-  - cuda
-  - gpu
-  - profiling
-author: "@exampleuser"
-organisation: "Example University"
-date: 2026-08-26
-timeSensitive: false
-sources:
-  - title: "NVIDIA Nsight Compute documentation"
-    url: "https://docs.nvidia.com/nsight-compute/"
----
-
-## What we were trying to solve
-
-One or two paragraphs of context...`;
 ---
 
 <Base
   title="Contribute"
-  description="How to submit a sustainability case study directly in your browser — no Git or command line needed."
+  description="How to submit a sustainability case study."
 >
   <div class="wrap section">
     <div class="section__head section__head--wide">
@@ -38,71 +15,33 @@ One or two paragraphs of context...`;
         <h1>Contributing</h1>
         <p>Share your experiences of working on sustainability in your role.</p>
         <p>
-          This site is only useful if it reflects what people are really doing — including the
-          things that did not work! You only need a free GitHub account; everything can be done
-          in your browser.
+        This site is only useful if it reflects what people are really doing, including the
+          things that did not work! To contribute you only need a GitHub account. 
         </p>
         <div class="button-row" style="padding-top:.25rem">
           <a class="button button--primary" href={url('/contribute/write')}>
-            Write a case study in your browser →
+            Write a case study
           </a>
           <a
             class="button button--ghost"
             href={`${REPO_URL}/issues/new?template=propose-article.yml`}
             rel="noopener"
           >
-            Check an idea first
-          </a>
-        </div>
-      </div>
-    </div>
-
-    <div class="method-grid" style="max-width:var(--measure-wide)">
-      <div class="method-card method-card--featured">
-        <span class="eyebrow">Easiest · Visual editor</span>
-        <h3>1. Use the browser editor</h3>
-        <p>
-          Fill in a guided form with live preview and automatic validation, then submit either as
-          a <strong>draft GitHub Issue</strong> (to iterate with co-authors before publishing) or
-          a <strong>direct pull request</strong>.
-        </p>
-        <div class="button-row">
-          <a class="button button--primary" href={url('/contribute/write')}>
-            Open article editor
-          </a>
-        </div>
-      </div>
-
-      <div class="method-card">
-        <span class="eyebrow">No forks or branches</span>
-        <h3>2. Draft directly in a GitHub Issue</h3>
-        <p>
-          Prefer staying on GitHub without touching Git? Fill in the{' '}
-          <strong>Start or submit an article</strong> issue form, edit the issue with co-authors
-          as you go, and comment <code>/publish</code> when ready for a bot to open the review
-          pull request.
-        </p>
-        <div class="button-row">
-          <a
-            class="button button--ghost"
-            href={`${REPO_URL}/issues/new?template=submit-article.yml`}
-            rel="noopener"
-          >
-            Open draft issue form →
+            Draft an idea
           </a>
         </div>
       </div>
     </div>
 
     <div class="prose prose--wide">
-      <h2>What makes a good article</h2>
+      <h2>Tips on writing a good article</h2>
       <ul>
         <li>
           Be specific. Often sustainability advice is less practical because it is too generic.
         </li>
-        <li>Say what it cost — effort, money, disruption, etc.</li>
+        <li>Say what it cost in terms of effort, money, disruption, etc.</li>
         <li>Include anything that did not work.</li>
-        <li>Cite any sources, especially for emissions, energy or cost figures.</li>
+        <li>Cite any sources for things like emissions, energy or cost figures.</li>
         <li>
           Only submit content you wrote or have the right to publish. Everything here is released
           under CC&nbsp;BY&nbsp;4.0.
@@ -110,7 +49,7 @@ One or two paragraphs of context...`;
       </ul>
 
       <h2>Roles</h2>
-      <p>Who is this for? Pick 1–4 roles that would be most interested in your contribution.</p>
+      <p>The target audience of the article.</p>
       <ul>
         {
           Object.entries(ROLES).map(([id, role]) => (
@@ -123,92 +62,9 @@ One or two paragraphs of context...`;
 
       <h2>Commenting</h2>
       <p>
-        Every article has a discussion thread using GitHub Discussions. Sign in with a GitHub
+        Every article has a discussion thread using GitHub Discussions. You need to be signed in with a GitHub
         account to add a question or comment.
       </p>
-
-      <h2>Manual Git workflow &amp; file format reference</h2>
-      <p>
-        If you use the <a href={url('/contribute/write')}>browser editor</a> or the{' '}
-        <a href={`${REPO_URL}/issues/new?template=submit-article.yml`} rel="noopener">
-          draft issue form
-        </a>, the YAML header and filename are generated for you automatically. If you prefer to
-        work locally with Git and a text editor:
-      </p>
-      <ol>
-        <li>Fork the repository and create a branch.</li>
-        <li>
-          Copy <code>templates/article-template.md</code> to{' '}
-          <code>content/case-studies/your-article-name.md</code> (lowercase words separated by
-          hyphens).
-        </li>
-        <li>Fill in the YAML header and write the body in Markdown starting headings at <code>##</code>.</li>
-        <li>Open a pull request and answer the checklist questions in the description.</li>
-      </ol>
-
-      <pre><code>{template}</code></pre>
-
-      <h3>Frontmatter fields</h3>
-      <table>
-        <thead>
-          <tr><th>Field</th><th>Required</th><th>Notes</th></tr>
-        </thead>
-        <tbody>
-          <tr><td><code>title</code></td><td>Yes</td><td>8–100 characters.</td></tr>
-          <tr>
-            <td><code>description</code></td><td>Yes</td>
-            <td>40–300 characters. Shown on cards and in search results.</td>
-          </tr>
-          <tr>
-            <td><code>roles</code></td><td>Yes</td>
-            <td>1–4 from the fixed list above.</td>
-          </tr>
-          <tr>
-            <td><code>tags</code></td><td>Yes</td>
-            <td>
-              1–8, lowercase kebab-case. Reuse <a href={url('/tags')}>existing tags</a> where you can.
-            </td>
-          </tr>
-          <tr>
-            <td><code>author</code></td><td>Yes</td>
-            <td>Your GitHub handle, or a list of handles for co-authors.</td>
-          </tr>
-          <tr><td><code>organisation</code></td><td>No</td><td>Institution or facility.</td></tr>
-          <tr><td><code>date</code></td><td>Yes</td><td><code>YYYY-MM-DD</code>.</td></tr>
-          <tr>
-            <td><code>updated</code></td><td>No</td>
-            <td>Set on substantive revisions. Must not precede <code>date</code>.</td>
-          </tr>
-          <tr>
-            <td><code>timeSensitive</code></td><td>No</td>
-            <td>
-              <code>true</code> if the article cites specific tool versions, prices, etc. Renders
-              a dated warning banner.
-            </td>
-          </tr>
-          <tr>
-            <td><code>sources</code></td><td>No</td>
-            <td>Title/URL pairs. Strongly encouraged, especially for any figures you quote.</td>
-          </tr>
-          <tr>
-            <td><code>draft</code></td><td>No</td>
-            <td>
-              <code>true</code> keeps it off the home page, browse, role and tag pages and the feed
-              while you work. The article still gets its own unlisted web address you can send to a
-              co-author for comments. Change to <code>false</code> to publish.
-            </td>
-          </tr>
-          <tr>
-            <td><code>draftId</code></td><td>Only for drafts</td>
-            <td>
-              Random characters added to a draft's web address. Run <code>npm run draft:id</code>,
-              or type 6–16 random lowercase letters and digits. Unlisted is not private — anyone
-              given the link or reading this repository can see the draft, so keep confidential
-              material out of it.
-            </td>
-          </tr>
-        </tbody>
-      </table>
     </div>
   </div>
 </Base>

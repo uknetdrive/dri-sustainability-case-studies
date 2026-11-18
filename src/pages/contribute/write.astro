@@ -39,7 +39,7 @@ const editorConfig = JSON.stringify({
 
 <Base
   title="Write a case study"
-  description="Write and preview a sustainability case study directly in your browser, then submit it as a shared draft issue or pull request."
+  description="Write and preview a sustainability case study directly in your browser, then submit it for publishing or as a draft for discussion."
 >
   <div class="wrap section" id="article-editor" data-config={editorConfig}>
     <p class="breadcrumb">
@@ -106,7 +106,7 @@ const editorConfig = JSON.stringify({
       <form class="editor-form" id="case-study-form" novalidate>
         <div class="field">
           <div class="field__head">
-            <label for="f-title">Working title</label>
+            <label for="f-title">Title</label>
             <span class="field__count" id="count-title">0 / 100 (min 8)</span>
           </div>
           <input
@@ -114,7 +114,7 @@ const editorConfig = JSON.stringify({
             id="f-title"
             type="text"
             maxlength="100"
-            placeholder="Right-sizing CI pipelines in a research software group"
+            placeholder=""
             required
           />
           <div class="slug-row">
@@ -139,7 +139,7 @@ const editorConfig = JSON.stringify({
             <span class="field__count" id="count-description">0 / 300 (min 40)</span>
           </div>
           <p class="field__hint">
-            One or two sentences on what you did and what a reader will take away — shown on
+            One or two sentences on what you did. This is shown on
             browse cards and in search results.
           </p>
           <textarea
@@ -147,7 +147,7 @@ const editorConfig = JSON.stringify({
             id="f-description"
             rows="3"
             maxlength="300"
-            placeholder="How we cut GitHub Actions runner minutes by 60% using dependency caching and path filters, and where caching actually slowed builds down."
+            placeholder=""
             required></textarea>
         </div>
 
@@ -155,9 +155,9 @@ const editorConfig = JSON.stringify({
           <fieldset>
             <div class="field__head">
               <legend>Target role(s)</legend>
-              <span class="field__count" id="count-roles">0 / 4 selected (min 1)</span>
+              <span class="field__count" id="count-roles">0 selected (min 1)</span>
             </div>
-            <p class="field__hint">Who would act on this? Pick between 1 and 4 roles.</p>
+            <p class="field__hint">Which roles would benefit from this?</p>
             <div class="role-grid">
               {
                 roleEntries.map((role) => (
@@ -185,8 +185,7 @@ const editorConfig = JSON.stringify({
             <span class="field__count" id="count-tags">0 / 8 tags (min 1)</span>
           </div>
           <p class="field__hint">
-            Click any <a href={url('/tags')} target="_blank" rel="noopener">existing tag</a> below to
-            reuse it, or type a new tag (spaces are converted to <code>kebab-case</code> automatically).
+            Click any existing tag below to reuse it, or type a new tag (spaces are converted to <code>kebab-case</code> automatically).
           </p>
 
           <div class="tag-selected" id="selected-tags" aria-live="polite"></div>
@@ -224,17 +223,17 @@ const editorConfig = JSON.stringify({
 
         <div class="two-col">
           <div class="field">
-            <label for="f-author">Your GitHub handle</label>
+            <label for="f-author">Your GitHub username</label>
             <p class="field__hint">
-              Credited in the byline (optional if submitting via GitHub Issue, which uses your signed-in account).
+              Shown in the preview. When you submit, the GitHub account you're signed in with is credited.
             </p>
-            <input class="text-input" id="f-author" type="text" placeholder="@your-handle" />
+            <input class="text-input" id="f-author" type="text" placeholder="@username" />
           </div>
 
           <div class="field">
             <label for="f-coauthors">Co-authors (optional)</label>
-            <p class="field__hint">Comma-separated GitHub handles of any co-authors.</p>
-            <input class="text-input" id="f-coauthors" type="text" placeholder="@colleague-one, @colleague-two" />
+            <p class="field__hint">Comma-separated GitHub usernames of any co-authors.</p>
+            <input class="text-input" id="f-coauthors" type="text" placeholder="@coauthor-one, @coauthor-two" />
           </div>
         </div>
 
@@ -251,7 +250,7 @@ const editorConfig = JSON.stringify({
               <span>
                 <strong style="display:block">Contains time-sensitive details</strong>
                 <span style="color:var(--text-muted); font-size:0.82rem">
-                  Tick if this cites specific software versions, prices or policies under consultation (adds a "last checked" banner).
+                  Tick if this cites things like specific software versions, prices or policies (adds a "last checked" banner).
                 </span>
               </span>
             </label>
@@ -263,7 +262,7 @@ const editorConfig = JSON.stringify({
             <label>External sources (optional)</label>
           </div>
           <p class="field__hint">
-            Strongly encouraged — especially for any energy, carbon or cost figures you quote.
+          Any websites you mention that you want to reference.
           </p>
           <div class="source-list" id="sources-list"></div>
           <div>
@@ -281,9 +280,8 @@ const editorConfig = JSON.stringify({
             </button>
           </div>
           <p class="field__hint">
-            Start section headings at <code>##</code> (the page <code>&lt;h1&gt;</code> comes from your
-            Working title). Include specifics, costs, and anything that did not work. Keep confidential
-            material out of drafts.
+            Start section headings with <code>##</code> (the page <code>&lt;h1&gt;</code> comes from your
+            Working title). The template structure is just a suggestion!
           </p>
 
           <div>
@@ -383,10 +381,10 @@ const editorConfig = JSON.stringify({
 
     {/* ── Validation summary & browser submission options ─────────────────── */}
     <section style="margin-top:2.5rem; padding-top:2rem; border-top:1px solid var(--border); max-width:var(--measure-wide)">
-      <h2>Submit in your browser</h2>
+      <h2>Submit</h2>
       <p style="color:var(--text-muted); margin-top:0.35rem; margin-bottom:1.1rem">
-        Both options below work entirely in your browser with a free GitHub account — choose
-        whichever suits where you are in the writing process.
+        Both options need a GitHub account. GitHub opens in a new tab with your article
+        filled in. Click <strong>Create</strong> there to send it.
       </p>
 
       <div class="validation-box" id="validation-box" aria-live="polite"></div>
@@ -395,39 +393,29 @@ const editorConfig = JSON.stringify({
 
       <div class="method-grid">
         <div class="method-card method-card--featured">
-          <span class="eyebrow">Recommended · Zero Git</span>
-          <h3>Draft &amp; submit via a GitHub Issue</h3>
+          <span class="eyebrow">Finished</span>
+          <h3>Submit for publishing</h3>
           <p>
-            No forks or branches needed. Opens a pre-filled GitHub Issue that you can share with
-            co-authors for discussion and edit as many times as you like — a bot validates every
-            save automatically.
-          </p>
-          <p>
-            When ready, comment <code>/publish</code> on the issue and the bot opens the final
-            pull request for maintainer review.
+            Your article is sent to maintainers for review. You'll
+            get a GitHub notification when it is published or if anything needs changing.
           </p>
           <div class="button-row">
-            <button class="button button--primary" type="button" id="submit-issue-btn">
-              Open pre-filled GitHub Issue →
+            <button class="button button--primary" type="button" id="submit-publish-btn">
+              Submit for publishing
             </button>
           </div>
         </div>
 
         <div class="method-card">
-          <span class="eyebrow">Direct Pull Request</span>
-          <h3>Open in GitHub's web file editor</h3>
+          <span class="eyebrow">Still in progress</span>
+          <h3>Submit as draft for discussion</h3>
           <p>
-            Best if your article is ready now. GitHub automatically forks the repository in the
-            background and pre-fills <code>content/case-studies/&lt;slug&gt;.md</code> so you only
-            click <strong>Propose changes → Create pull request</strong>.
+            Creates a GitHub issue where co-authors and others can read and comment. You can keep
+            editing it, and tick <strong>Ready to publish</strong> at the top when it's done.
           </p>
-          <label class="check-row" style="font-size:0.82rem; color:var(--text-muted)">
-            <input type="checkbox" id="f-pr-draft" />
-            <span>Submit PR as an unlisted draft (<code>draft: true</code>)</span>
-          </label>
           <div class="button-row">
-            <button class="button button--ghost" type="button" id="submit-pr-btn">
-              Open in GitHub web editor →
+            <button class="button button--ghost" type="button" id="submit-draft-btn">
+              Submit as draft
             </button>
           </div>
         </div>
@@ -469,21 +457,17 @@ const editorConfig = JSON.stringify({
     sources: SourceItem[];
     body: string;
     terms: boolean;
-    prDraft: boolean;
-    draftId: string;
   }
 
   const STORAGE_KEY = 'dri-case-study-draft-v1';
   const KEBAB_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
   const HANDLE_RE = /^@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,37}[a-zA-Z0-9])?$/;
-  const DRAFT_ALPHABET = 'bcdfghjkmnpqrstvwxz23456789';
   const MAX_GITHUB_URL_LEN = 5800;
 
   const root = document.getElementById('article-editor');
   if (root) {
     const config: EditorConfig = JSON.parse(root.dataset.config ?? '{}');
     const roleLabelMap = new Map(config.roles.map((r) => [r.id, r.label]));
-    const roleIndexMap = new Map(config.roles.map((r) => [r.id, r.index]));
 
     const titleInput = document.getElementById('f-title') as HTMLInputElement;
     const slugInput = document.getElementById('f-slug') as HTMLInputElement;
@@ -506,7 +490,6 @@ const editorConfig = JSON.stringify({
     const addSourceBtn = document.getElementById('add-source-btn') as HTMLButtonElement;
     const bodyInput = document.getElementById('f-body') as HTMLTextAreaElement;
     const termsInput = document.getElementById('f-terms') as HTMLInputElement;
-    const prDraftInput = document.getElementById('f-pr-draft') as HTMLInputElement;
 
     const countTitle = document.getElementById('count-title') as HTMLElement;
     const countDesc = document.getElementById('count-description') as HTMLElement;
@@ -516,19 +499,13 @@ const editorConfig = JSON.stringify({
     const resetBtn = document.getElementById('reset-draft-btn') as HTMLButtonElement;
     const validationBox = document.getElementById('validation-box') as HTMLElement;
     const clipboardNotice = document.getElementById('clipboard-notice') as HTMLElement;
-    const submitIssueBtn = document.getElementById('submit-issue-btn') as HTMLButtonElement;
-    const submitPrBtn = document.getElementById('submit-pr-btn') as HTMLButtonElement;
+    const submitPublishBtn = document.getElementById('submit-publish-btn') as HTMLButtonElement;
+    const submitDraftBtn = document.getElementById('submit-draft-btn') as HTMLButtonElement;
 
     const sourceFilepathEl = document.getElementById('source-filepath') as HTMLElement;
     const generatedMdEl = document.getElementById('generated-md') as HTMLElement;
     const copyMdBtn = document.getElementById('copy-md-btn') as HTMLButtonElement;
     const downloadMdBtn = document.getElementById('download-md-btn') as HTMLButtonElement;
-
-    function randomDraftId(): string {
-      const bytes = new Uint32Array(10);
-      crypto.getRandomValues(bytes);
-      return Array.from(bytes, (b) => DRAFT_ALPHABET[b % DRAFT_ALPHABET.length]).join('');
-    }
 
     function slugify(value: string): string {
       return (
@@ -561,7 +538,6 @@ const editorConfig = JSON.stringify({
     let slugManual = false;
     let tags: string[] = [];
     let sources: SourceItem[] = [];
-    let draftId = randomDraftId();
 
     function loadStored(): void {
       try {
@@ -587,10 +563,6 @@ const editorConfig = JSON.stringify({
         sources = Array.isArray(saved.sources) ? saved.sources : [];
         bodyInput.value = typeof saved.body === 'string' ? saved.body : config.defaultBody;
         termsInput.checked = Boolean(saved.terms);
-        prDraftInput.checked = Boolean(saved.prDraft);
-        if (saved.draftId && /^[a-z0-9]{6,16}$/.test(saved.draftId)) {
-          draftId = saved.draftId;
-        }
       } catch {
         bodyInput.value = config.defaultBody;
         slugInput.value = 'your-article-name';
@@ -612,8 +584,6 @@ const editorConfig = JSON.stringify({
         sources,
         body: bodyInput.value,
         terms: termsInput.checked,
-        prDraft: prDraftInput.checked,
-        draftId,
       };
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -737,7 +707,6 @@ const editorConfig = JSON.stringify({
 
     function validateState() {
       const commonErrors: string[] = [];
-      const prExtraErrors: string[] = [];
 
       const title = titleInput.value.trim().replace(/\s+/g, ' ');
       const titleOk = title.length >= 8 && title.length <= 100;
@@ -755,14 +724,14 @@ const editorConfig = JSON.stringify({
       if (!descOk) commonErrors.push('Short summary must be 40–300 characters.');
 
       const selectedRoles = roleCheckboxes.filter((c) => c.checked).map((c) => c.value);
-      const rolesOk = selectedRoles.length >= 1 && selectedRoles.length <= 4;
+      const rolesOk = selectedRoles.length >= 1;
       setCounterState(
         countRoles,
-        `${selectedRoles.length} / 4 selected (min 1)`,
+        `${selectedRoles.length} selected (min 1)`,
         rolesOk,
         selectedRoles.length === 0,
       );
-      if (!rolesOk) commonErrors.push('Select between 1 and 4 target roles.');
+      if (!rolesOk) commonErrors.push('Select at least 1 target role.');
 
       const tagsOk = tags.length >= 1 && tags.length <= 8;
       setCounterState(countTags, `${tags.length} / 8 tags (min 1)`, tagsOk, tags.length === 0);
@@ -771,9 +740,6 @@ const editorConfig = JSON.stringify({
       const authors = collectAuthors();
       for (const bad of authors.badHandles) {
         commonErrors.push(`GitHub handle "${bad}" is not valid (use letters, digits and hyphens).`);
-      }
-      if (authors.all.length === 0) {
-        prExtraErrors.push('Add your GitHub handle (required when opening a Pull Request directly).');
       }
 
       const validSources: SourceItem[] = [];
@@ -804,7 +770,7 @@ const editorConfig = JSON.stringify({
       }
       if (/^#\s+\S/m.test(stripped)) {
         commonErrors.push(
-          'Start section headings in the body at ## rather than # (the page title is rendered automatically).',
+          'Start section headings in the body at ## rather than # (the page title is rendered automatically). The template structure is just a suggestion!',
         );
       }
       const withoutCodeAndAutolinks = stripped
@@ -833,9 +799,7 @@ const editorConfig = JSON.stringify({
         timeSensitive: tsInput.checked,
         validSources,
         body,
-        isDraftPr: prDraftInput.checked,
         commonErrors,
-        prExtraErrors,
       };
     }
 
@@ -869,10 +833,7 @@ const editorConfig = JSON.stringify({
           lines.push(`    url: ${JSON.stringify(s.url)}`);
         }
       }
-      lines.push(`draft: ${state.isDraftPr}`);
-      if (state.isDraftPr) {
-        lines.push(`draftId: ${JSON.stringify(draftId)}`);
-      }
+      lines.push('draft: false');
       lines.push('---', '', state.body, '');
       return lines.join('\n');
     }
@@ -1095,10 +1056,9 @@ const editorConfig = JSON.stringify({
       updatePreview(state);
 
       const issueReady = state.commonErrors.length === 0;
-      const prReady = issueReady && state.prExtraErrors.length === 0;
 
-      submitIssueBtn.disabled = !issueReady;
-      submitPrBtn.disabled = !prReady;
+      submitPublishBtn.disabled = !issueReady;
+      submitDraftBtn.disabled = !issueReady;
 
       validationBox.innerHTML = '';
       validationBox.classList.toggle('validation-box--ok', issueReady);
@@ -1107,13 +1067,6 @@ const editorConfig = JSON.stringify({
         const p = document.createElement('p');
         p.innerHTML = '<strong>✓ Ready to submit.</strong> All required fields pass validation.';
         validationBox.appendChild(p);
-        if (state.prExtraErrors.length > 0) {
-          const note = document.createElement('p');
-          note.style.marginTop = '0.35rem';
-          note.style.color = 'var(--text-muted)';
-          note.textContent = `Note: ${state.prExtraErrors.join(' ')}`;
-          validationBox.appendChild(note);
-        }
       } else {
         const p = document.createElement('p');
         p.innerHTML = '<strong>Complete the following before submitting:</strong>';
@@ -1256,7 +1209,6 @@ const editorConfig = JSON.stringify({
       tsInput,
       bodyInput,
       termsInput,
-      prDraftInput,
       ...roleCheckboxes,
     ]) {
       el.addEventListener('input', refreshAll);
@@ -1283,8 +1235,6 @@ const editorConfig = JSON.stringify({
       sources = [];
       bodyInput.value = config.defaultBody;
       termsInput.checked = false;
-      prDraftInput.checked = false;
-      draftId = randomDraftId();
       clipboardNotice.hidden = true;
       renderTags();
       renderSources();
@@ -1319,79 +1269,76 @@ const editorConfig = JSON.stringify({
       clipboardNotice.hidden = false;
     }
 
-    // Submit Path 1: Pre-filled GitHub Issue ("Drafts under the hood")
-    submitIssueBtn.addEventListener('click', async () => {
+    // Builds the issue text read by scripts/issue-draft.mjs. The hidden markers
+    // and the `key: value` lines in the details block must stay in step with
+    // `parseIssueBody` there.
+    function buildIssueBody(state: ReturnType<typeof validateState>, ready: boolean): string {
+      const details = [
+        `title: ${state.title}`,
+        `summary: ${state.desc}`,
+        `web-address: ${state.slug}`,
+        `roles: ${state.selectedRoles.join(', ')}`,
+        `tags: ${tags.join(', ')}`,
+      ];
+      if (state.organisation) details.push(`organisation: ${state.organisation}`);
+      if (state.authors.coauthors.length > 0) {
+        details.push(`co-authors: ${state.authors.coauthors.join(', ')}`);
+      }
+      details.push(`time-sensitive: ${state.timeSensitive ? 'yes' : 'no'}`);
+      details.push('licence: CC BY 4.0 confirmed');
+      if (state.validSources.length > 0) {
+        details.push('sources:');
+        for (const s of state.validSources) details.push(`  ${s.title} | ${s.url}`);
+      }
+
+      return [
+        '<!-- dri-case-study -->',
+        `- [${ready ? 'x' : ' '}] **Ready to publish** (tick when this article is ready for maintainer review)`,
+        '',
+        '<details>',
+        '<summary>Article details</summary>',
+        '',
+        '```text',
+        ...details,
+        '```',
+        '',
+        '</details>',
+        '',
+        '<!-- article -->',
+        '',
+        state.body,
+        '',
+      ].join('\n');
+    }
+
+    async function submitIssue(ready: boolean): Promise<void> {
       const state = validateState();
       if (state.commonErrors.length > 0) return;
 
-      const roleIndexes = state.selectedRoles
-        .map((id) => roleIndexMap.get(id))
-        .filter((n): n is number => typeof n === 'number')
-        .join(',');
-
-      const sourcesText = state.validSources.map((s) => `${s.title} | ${s.url}`).join('\n');
-      const coauthorsText = state.authors.coauthors.join(', ');
-
-      const buildIssueUrl = (includeBody: boolean): string => {
+      const title = ready ? `Case study: ${state.title}` : `[Draft] ${state.title}`;
+      const body = buildIssueBody(state, ready);
+      const buildUrl = (includeBody: boolean): string => {
         const params = new URLSearchParams();
-        params.set('template', 'submit-article.yml');
-        params.set('title', `[Draft] ${state.title}`);
-        params.set('article_title', state.title);
-        params.set('description', state.desc);
-        if (roleIndexes) params.set('roles', roleIndexes);
-        params.set('tags', tags.join(', '));
-        if (state.organisation) params.set('organisation', state.organisation);
-        if (coauthorsText) params.set('coauthors', coauthorsText);
-        params.set('timesensitive', state.timeSensitive ? 'Yes' : 'No');
-        if (sourcesText) params.set('sources', sourcesText);
-        params.set('terms', '0');
-        if (includeBody) params.set('content', state.body);
+        params.set('title', title);
+        if (includeBody) params.set('body', body);
         return `${config.repoUrl}/issues/new?${params.toString()}`;
       };
 
-      const fullUrl = buildIssueUrl(true);
+      const fullUrl = buildUrl(true);
       if (fullUrl.length <= MAX_GITHUB_URL_LEN) {
         clipboardNotice.hidden = true;
         window.open(fullUrl, '_blank', 'noopener');
       } else {
-        await navigator.clipboard.writeText(state.body);
+        await navigator.clipboard.writeText(body);
         showClipboardNotice(
-          'Your article body is long enough to exceed browser URL limits, so we copied your Markdown content to the clipboard and pre-filled all other fields — paste (Ctrl+V / Cmd+V) into the "Article content (Markdown)" box on GitHub.',
+          'Your article is too long to send to GitHub directly, so it has been copied to your clipboard. Paste it (Ctrl+V / Cmd+V) into the empty description box in the GitHub tab that just opened, then click Create.',
         );
-        window.open(buildIssueUrl(false), '_blank', 'noopener');
+        window.open(buildUrl(false), '_blank', 'noopener');
       }
-    });
+    }
 
-    // Submit Path 2: Pre-filled GitHub `/new/main` web file creator
-    submitPrBtn.addEventListener('click', async () => {
-      const state = validateState();
-      if (state.commonErrors.length > 0 || state.prExtraErrors.length > 0) return;
-
-      const md = buildMarkdownFile(state);
-      const commitMsg = state.isDraftPr
-        ? `Add draft case study: ${state.title}`
-        : `Add case study: ${state.title}`;
-
-      const buildNewFileUrl = (includeValue: boolean): string => {
-        const params = new URLSearchParams();
-        params.set('filename', `content/case-studies/${state.slug}.md`);
-        params.set('message', commitMsg);
-        if (includeValue) params.set('value', md);
-        return `${config.repoUrl}/new/main?${params.toString()}`;
-      };
-
-      const fullUrl = buildNewFileUrl(true);
-      if (fullUrl.length <= MAX_GITHUB_URL_LEN) {
-        clipboardNotice.hidden = true;
-        window.open(fullUrl, '_blank', 'noopener');
-      } else {
-        await navigator.clipboard.writeText(md);
-        showClipboardNotice(
-          'Your generated .md file exceeds browser URL limits, so we copied the complete file to your clipboard — paste (Ctrl+V / Cmd+V) into the GitHub editor tab that just opened, then click "Propose changes".',
-        );
-        window.open(buildNewFileUrl(false), '_blank', 'noopener');
-      }
-    });
+    submitPublishBtn.addEventListener('click', () => submitIssue(true));
+    submitDraftBtn.addEventListener('click', () => submitIssue(false));
 
     loadStored();
     renderTags();

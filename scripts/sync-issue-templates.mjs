@@ -13,10 +13,7 @@ import path from 'node:path';
 import { ROLES } from '../src/lib/taxonomy.ts';
 
 const writeMode = process.argv.includes('--write');
-const TEMPLATES = [
-  '.github/ISSUE_TEMPLATE/propose-article.yml',
-  '.github/ISSUE_TEMPLATE/submit-article.yml',
-];
+const TEMPLATES = ['.github/ISSUE_TEMPLATE/propose-article.yml'];
 
 const expectedBlock = Object.values(ROLES)
   .map((role) => `        - label: ${role.label}`)

@@ -17,8 +17,8 @@ This resource was created as part of the NetDRIVE Community Project EMIT, which 
 ## How it works
 
 - Articles live in `content/case-studies/` as Markdown with a YAML header.
-- Contributors can write and preview articles in the browser at `/contribute/write`, then submit either via a **draft GitHub Issue** (`.github/ISSUE_TEMPLATE/submit-article.yml` + `.github/workflows/issue-drafts.yml`) or GitHub's web file editor.
-- Draft issues never commit to `main`: edits are validated automatically, and commenting `/publish` opens a review PR (`main` only changes when a maintainer merges a PR).
+- Contributors write and preview articles in the browser at `/contribute/write`, then submit them as a GitHub issue, either **for publishing** or **as a draft for discussion**. `.github/workflows/issue-drafts.yml` and `scripts/issue-draft.mjs` handle these issues.
+- Edits are checked automatically, and ticking **Ready to publish** in the issue (already ticked when submitted for publishing) or commenting `/publish` opens a review PR. `main` only changes when a maintainer merges a PR.
 - Comments on each article are GitHub Discussions.
 
 ## Local development

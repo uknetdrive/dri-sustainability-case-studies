@@ -2,10 +2,10 @@ blank_issues_enabled: true
 contact_links:
   - name: Write an article in the browser editor
     url: https://uknetdrive.github.io/dri-sustainability-case-studies/contribute/write/
-    about: Visual form with live preview — generates a shared draft issue or pull request for you.
+    about: Write and preview your article, then submit it for publishing or as a draft for discussion.
   - name: Contributing guide
     url: https://uknetdrive.github.io/dri-sustainability-case-studies/contribute/
-    about: How case studies are structured, roles, tags and review guidelines.
+    about: How to contribute, tips, and how to comment on articles.
   - name: Discuss an article
     url: ../../discussions
     about: Questions and comments on a published article belong in Discussions.

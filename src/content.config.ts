@@ -33,8 +33,7 @@ const caseStudies = defineCollection({
 
       roles: z
         .array(z.enum(ROLE_IDS))
-        .min(1, 'List at least one target role.')
-        .max(4, 'Pick the 1–4 roles this is aimed at.'),
+        .min(1, 'List at least one target role.'),
 
       tags: z.array(tag).min(1, 'Add at least one tag.').max(8),
 
