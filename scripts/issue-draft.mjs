@@ -96,7 +96,7 @@ export function checkImages(markdown) {
   const checkOne = (src, alt) => {
     if (!ALLOWED_IMG_SRC_RE.test(src)) {
       errors.push(
-        `**Article content:** the image \`${src.slice(0, 80)}\` is not uploaded to GitHub. Add images by dragging them into this issue on GitHub.`,
+        `**Article content:** the image \`${src.slice(0, 80)}\` is not uploaded to GitHub. Add images by editing this issue and dragging them into the article text.`,
       );
     } else if (isWeakAltText(alt)) {
       errors.push(

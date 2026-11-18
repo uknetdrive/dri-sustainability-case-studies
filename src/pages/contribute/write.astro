@@ -284,10 +284,10 @@ const editorConfig = JSON.stringify({
             Working title). The template structure is just a suggestion!
           </p>
           <p class="field__hint">
-            <strong>Adding images:</strong> choose <strong>Submit as draft</strong> below. Then, on
-            GitHub, edit the issue and drag your images into the article text, as you would on any
-            GitHub page. Replace the automatic alt text with a short description of each image.
-            You can tick <strong>Ready to publish</strong> once they have been added.
+            <strong>Adding images:</strong> after you click either submit button below, GitHub
+            opens with your article filled in. Drag your images into the article text there, as
+            you would on any GitHub page, before clicking <strong>Create</strong>. Replace the
+            automatic alt text with a short description of each image.
           </p>
 
           <div>
@@ -390,7 +390,7 @@ const editorConfig = JSON.stringify({
       <h2>Submit</h2>
       <p style="color:var(--text-muted); margin-top:0.35rem; margin-bottom:1.1rem">
         Both options need a GitHub account. GitHub opens in a new tab with your article
-        filled in. Click <strong>Create</strong> there to send it.
+        filled in as a Github issue. Click <strong>Create</strong> there to send it to maintainers.
       </p>
 
       <div class="validation-box" id="validation-box" aria-live="polite"></div>
@@ -405,10 +405,6 @@ const editorConfig = JSON.stringify({
             Your article is sent to maintainers for review. You'll
             get a GitHub notification when it is published or if anything needs changing.
           </p>
-          <p>
-            <strong>Want to include images?</strong> Use <strong>Submit as draft</strong> instead,
-            so you can add them on GitHub before publishing.
-          </p>
           <div class="button-row">
             <button class="button button--primary" type="button" id="submit-publish-btn">
               Submit for publishing
@@ -421,8 +417,7 @@ const editorConfig = JSON.stringify({
           <h3>Submit as draft for discussion</h3>
           <p>
             Creates a GitHub issue where co-authors and others can read and comment. You can keep
-            editing it, add images by dragging them in, and tick <strong>Ready to publish</strong>
-            at the top when it's done.
+            editing it, and tick <strong>Ready to publish</strong> at the top when it's done.
           </p>
           <div class="button-row">
             <button class="button button--ghost" type="button" id="submit-draft-btn">
@@ -598,7 +593,7 @@ const editorConfig = JSON.stringify({
     function imageError(img: ImageRef): string | undefined {
       if (img.error) return img.error;
       if (!ALLOWED_IMG_SRC_RE.test(img.src)) {
-        return `The image "${img.src.slice(0, 60)}" isn't uploaded to GitHub. Submit as a draft and drag images into the issue there.`;
+        return `The image "${img.src.slice(0, 60)}" isn't uploaded to GitHub. Drag images into the article on GitHub after clicking submit.`;
       }
       if (isWeakAltText(img.alt)) {
         return `An image has missing or automatic alt text ("${img.alt.trim().slice(0, 40)}"). Describe what it shows instead.`;
