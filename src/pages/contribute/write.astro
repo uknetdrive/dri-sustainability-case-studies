@@ -283,6 +283,12 @@ const editorConfig = JSON.stringify({
             Start section headings with <code>##</code> (the page <code>&lt;h1&gt;</code> comes from your
             Working title). The template structure is just a suggestion!
           </p>
+          <p class="field__hint">
+            <strong>Adding images:</strong> choose <strong>Submit as draft</strong> below. Then, on
+            GitHub, edit the issue and drag your images into the article text, as you would on any
+            GitHub page. Replace the automatic alt text with a short description of each image.
+            You can tick <strong>Ready to publish</strong> once they have been added.
+          </p>
 
           <div>
             <div class="md-toolbar" role="toolbar" aria-label="Markdown formatting">
@@ -399,6 +405,10 @@ const editorConfig = JSON.stringify({
             Your article is sent to maintainers for review. You'll
             get a GitHub notification when it is published or if anything needs changing.
           </p>
+          <p>
+            <strong>Want to include images?</strong> Use <strong>Submit as draft</strong> instead,
+            so you can add them on GitHub before publishing.
+          </p>
           <div class="button-row">
             <button class="button button--primary" type="button" id="submit-publish-btn">
               Submit for publishing
@@ -411,7 +421,8 @@ const editorConfig = JSON.stringify({
           <h3>Submit as draft for discussion</h3>
           <p>
             Creates a GitHub issue where co-authors and others can read and comment. You can keep
-            editing it, and tick <strong>Ready to publish</strong> at the top when it's done.
+            editing it, add images by dragging them in, and tick <strong>Ready to publish</strong>
+            at the top when it's done.
           </p>
           <div class="button-row">
             <button class="button button--ghost" type="button" id="submit-draft-btn">
@@ -533,6 +544,75 @@ const editorConfig = JSON.stringify({
       return md
         .replace(/^```[\s\S]*?^```\s*$/gm, '')
         .replace(/^~~~[\s\S]*?^~~~\s*$/gm, '');
+    }
+
+    // Image rules, kept in step with `checkImages` in scripts/issue-draft.mjs:
+    // only files uploaded to GitHub (dragged into the issue), with real alt text.
+    const ALLOWED_IMG_SRC_RE = /^https:\/\/github\.com\/user-attachments\/assets\/[A-Za-z0-9-]+$/;
+    const HTML_IMG_RE = /<img\b([^<>]*?)\/?>/gi;
+    const MD_IMG_RE = /!\[([^\]]*)\]\(\s*<?([^)\s>]+)>?(?:\s+"[^"]*")?\s*\)/g;
+
+    interface ImageRef {
+      src: string;
+      alt: string;
+      width?: string;
+      height?: string;
+      error?: string;
+    }
+
+    function isWeakAltText(alt: string): boolean {
+      const a = alt.trim();
+      return (
+        a.length < 3 ||
+        /^(image|img|photo|picture|figure|untitled|screenshot|diagram|chart)$/i.test(a) ||
+        /\.(png|jpe?g|gif|webp|svg|bmp)$/i.test(a) ||
+        /^screen ?shot(\s+(from|at))?[\s\d_:.,-]*$/i.test(a)
+      );
+    }
+
+    function readHtmlImage(attrString: string): ImageRef {
+      const attrs = new Map<string, string>();
+      const leftover = attrString.replace(
+        /\s+([a-zA-Z-]+)\s*=\s*"([^"]*)"/g,
+        (_m, name: string, value: string) => {
+          attrs.set(name.toLowerCase(), value);
+          return '';
+        },
+      );
+      const unknown = [...attrs.keys()].some((k) => !['src', 'alt', 'width', 'height'].includes(k));
+      const badSize = ['width', 'height'].some(
+        (k) => attrs.has(k) && !/^\d{1,5}$/.test(attrs.get(k) ?? ''),
+      );
+      const img: ImageRef = {
+        src: attrs.get('src') ?? '',
+        alt: attrs.get('alt') ?? '',
+        width: attrs.get('width'),
+        height: attrs.get('height'),
+      };
+      if (leftover.trim() || unknown || badSize) {
+        img.error = 'An image tag contains something other than src, alt, width and height.';
+      }
+      return img;
+    }
+
+    function imageError(img: ImageRef): string | undefined {
+      if (img.error) return img.error;
+      if (!ALLOWED_IMG_SRC_RE.test(img.src)) {
+        return `The image "${img.src.slice(0, 60)}" isn't uploaded to GitHub. Submit as a draft and drag images into the issue there.`;
+      }
+      if (isWeakAltText(img.alt)) {
+        return `An image has missing or automatic alt text ("${img.alt.trim().slice(0, 40)}"). Describe what it shows instead.`;
+      }
+      return undefined;
+    }
+
+    function renderImage(img: ImageRef): string {
+      if (imageError(img)) return escapeHtml(`[image: ${img.alt || img.src}]`);
+      const size = [
+        img.width ? ` width="${img.width}"` : '',
+        img.height ? ` height="${img.height}"` : '',
+      ].join('');
+      return `<img src="${escapeHtml(img.src)}" alt="${escapeHtml(img.alt)}"${size} loading="lazy" />`;
     }
 
     let slugManual = false;
@@ -773,12 +853,24 @@ const editorConfig = JSON.stringify({
           'Start section headings in the body at ## rather than # (the page title is rendered automatically). The template structure is just a suggestion!',
         );
       }
+      const imageErrors = new Set<string>();
       const withoutCodeAndAutolinks = stripped
         .replace(/(`+)[\s\S]*?\1/g, '')
+        .replace(HTML_IMG_RE, (_m, attrString: string) => {
+          const err = imageError(readHtmlImage(attrString));
+          if (err) imageErrors.add(err);
+          return '';
+        })
+        .replace(MD_IMG_RE, (_m, alt: string, src: string) => {
+          const err = imageError({ src, alt });
+          if (err) imageErrors.add(err);
+          return '';
+        })
         .replace(/<https?:\/\/[^>\s]+>/gi, '');
+      commonErrors.push(...imageErrors);
       if (/<(?:!--|\/?[a-zA-Z][a-zA-Z0-9:-]*(?:[\s/>]|$))/.test(withoutCodeAndAutolinks)) {
         commonErrors.push(
-          'Raw HTML tags are not permitted — use Markdown, and wrap code or <angle-brackets> in backticks (`...`).',
+          'HTML tags are not permitted, apart from images uploaded to GitHub. Use Markdown, and wrap code or <angle-brackets> in backticks (`...`).',
         );
       }
       if (/javascript\s*:/i.test(withoutCodeAndAutolinks)) {
@@ -848,10 +940,13 @@ const editorConfig = JSON.stringify({
 
     function renderInlineMd(raw: string): string {
       const codeSlots: string[] = [];
-      let text = escapeHtml(raw).replace(/`([^`]+)`/g, (_m, code: string) => {
-        const idx = codeSlots.push(`<code>${code}</code>`) - 1;
-        return `\u0000CODE${idx}\u0000`;
-      });
+      const keep = (html: string): string => `\u0000CODE${codeSlots.push(html) - 1}\u0000`;
+      // Images are pulled out before escaping so they can be shown in the preview.
+      const withImages = raw
+        .replace(/`[^`]+`/g, (m) => keep(`<code>${escapeHtml(m.slice(1, -1))}</code>`))
+        .replace(HTML_IMG_RE, (_m, attrString: string) => keep(renderImage(readHtmlImage(attrString))))
+        .replace(MD_IMG_RE, (_m, alt: string, src: string) => keep(renderImage({ src, alt })));
+      let text = escapeHtml(withImages);
 
       text = text.replace(
         /\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g,

@@ -69,6 +69,67 @@ export function containsRawHtml(markdown) {
   return /<(?:!--|\/?[a-zA-Z][a-zA-Z0-9:-]*(?:[\s/>]|$))/.test(withoutCodeAndAutolinks);
 }
 
+/** Images must be files uploaded to GitHub (by dragging them into the issue). */
+const ALLOWED_IMG_SRC_RE = /^https:\/\/github\.com\/user-attachments\/assets\/[A-Za-z0-9-]+$/;
+const HTML_IMG_RE = /<img\b([^<>]*?)\/?>/gi;
+const MD_IMG_RE = /!\[([^\]]*)\]\(\s*<?([^)\s>]+)>?(?:\s+"[^"]*")?\s*\)/g;
+
+/** True when alt text is missing or is one GitHub filled in automatically. */
+export function isWeakAltText(alt) {
+  const a = String(alt ?? '').trim();
+  return (
+    a.length < 3 ||
+    /^(image|img|photo|picture|figure|untitled|screenshot|diagram|chart)$/i.test(a) ||
+    /\.(png|jpe?g|gif|webp|svg|bmp)$/i.test(a) ||
+    /^screen ?shot(\s+(from|at))?[\s\d_:.,-]*$/i.test(a)
+  );
+}
+
+/**
+ * Check every image in the article (outside code) and return the text with the
+ * images removed, so the raw-HTML check that follows does not trip on them.
+ */
+export function checkImages(markdown) {
+  const errors = [];
+  const text = stripCodeFences(markdown).replace(/(`+)[\s\S]*?\1/g, '');
+
+  const checkOne = (src, alt) => {
+    if (!ALLOWED_IMG_SRC_RE.test(src)) {
+      errors.push(
+        `**Article content:** the image \`${src.slice(0, 80)}\` is not uploaded to GitHub. Add images by dragging them into this issue on GitHub.`,
+      );
+    } else if (isWeakAltText(alt)) {
+      errors.push(
+        `**Article content:** an image has missing or automatic alt text (\`${String(alt).trim().slice(0, 60) || 'empty'}\`). Replace it with a short description of what the image shows, for people using screen readers.`,
+      );
+    }
+  };
+
+  let rest = text.replace(HTML_IMG_RE, (tag, attrString) => {
+    const attrs = new Map();
+    const leftover = attrString.replace(/\s+([a-zA-Z-]+)\s*=\s*"([^"]*)"/g, (_m, name, value) => {
+      attrs.set(name.toLowerCase(), value);
+      return '';
+    });
+    const unknown = [...attrs.keys()].filter((k) => !['src', 'alt', 'width', 'height'].includes(k));
+    const badSize = ['width', 'height'].some((k) => attrs.has(k) && !/^\d{1,5}$/.test(attrs.get(k)));
+    if (leftover.trim() || unknown.length > 0 || badSize) {
+      errors.push(
+        '**Article content:** an image tag contains something other than `src`, `alt`, `width` and `height`. Remove the extra parts, or drag the image into the issue again.',
+      );
+      return '';
+    }
+    checkOne(attrs.get('src') ?? '', attrs.get('alt') ?? '');
+    return '';
+  });
+  rest = rest.replace(MD_IMG_RE, (_m, alt, src) => {
+    checkOne(src, alt);
+    return '';
+  });
+
+  return { errors, rest };
+}
+
 /**
  * Parse external sources from lines formatted as:
  *   - `Title | https://example.org`
@@ -317,9 +378,11 @@ export function parseIssueBody(issueBody, issueAuthorLogin) {
       '**Article content:** start headings at `##` rather than `#` — the page `<h1>` title is rendered automatically from **title**.',
     );
   }
-  if (containsRawHtml(markdownBody)) {
+  const imageCheck = checkImages(markdownBody);
+  errors.push(...imageCheck.errors);
+  if (containsRawHtml(imageCheck.rest)) {
     errors.push(
-      '**Article content:** raw HTML tags are not permitted — use standard Markdown, and wrap code or `<angle-brackets>` in backticks (`` `...` ``).',
+      '**Article content:** HTML tags are not permitted, apart from images dragged into the issue. Use standard Markdown, and wrap code or `<angle-brackets>` in backticks (`` `...` ``).',
     );
   }
   if (/javascript\s*:/i.test(strippedBody.replace(/(`+)[\s\S]*?\1/g, ''))) {
