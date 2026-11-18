@@ -21,7 +21,7 @@ const tagCount = tally(articles, (a) => a.data.tags).length;
       </p>
       <div class="button-row" style="margin-top:.5rem">
         <a class="button button--primary" href={url('/case-studies')}>Browse case studies</a>
-        <a class="button button--ghost" href={url('/contribute')}>Contribute</a>
+        <a class="button button--ghost" href={url('/contribute/write')}>Write a case study</a>
       </div>
       <p style="color:var(--text-muted); font-size:var(--step--1)">
         {plural(articles.length, 'article')} · {plural(tagCount, 'topic')} · open to contributors

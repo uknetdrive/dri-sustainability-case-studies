@@ -1,0 +1,121 @@
+name: Start or submit an article
+description: Write a case study in your browser — creates a shareable unlisted draft on the site with no Git or forks needed.
+title: '[Draft] '
+labels: ['article-draft']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Fill in the fields below to draft your case study in your browser (or use the **[visual article editor](https://uknetdrive.github.io/dri-sustainability-case-studies/contribute/write/)** for a live preview first).
+
+        - **Share & iterate:** send this issue link to co-authors for comments, and edit the issue at any time — a bot checks your metadata and Markdown automatically on every save.
+        - **Publish:** comment **`/publish`** on this issue when you are ready to open a pull request for maintainer review.
+
+  - type: input
+    id: article_title
+    attributes:
+      label: Working title
+      description: 8–100 characters. Be specific about what you did.
+      placeholder: Right-sizing CI pipelines in a research software group
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Short summary
+      description: 40–300 characters. One or two sentences shown on browse cards and in search results.
+      placeholder: How we cut GitHub Actions runner minutes by 60% using dependency caching and path filters, and where caching actually slowed builds down.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: roles
+    attributes:
+      label: Target role(s)
+      description: Pick 1–4 roles this case study is aimed at.
+      options:
+        - label: Software engineer
+        - label: HPC facilitator
+        - label: Data scientist
+        - label: Project manager
+        - label: Compute user
+        - label: DevOps engineer
+        - label: Security engineer
+    validations:
+      required: true
+
+  - type: input
+    id: tags
+    attributes:
+      label: Tags
+      description: 1–8 tags, comma-separated, lowercase-kebab-case. Reuse existing tags from the /tags page where possible.
+      placeholder: continuous-integration, github-actions, caching, cost-reduction
+    validations:
+      required: true
+
+  - type: input
+    id: organisation
+    attributes:
+      label: Organisation
+      description: Optional institution, department or facility you are writing from.
+      placeholder: Example Research Institute
+
+  - type: input
+    id: coauthors
+    attributes:
+      label: Co-authors
+      description: Optional GitHub handles of any co-authors (comma-separated, e.g. @alice, @bob). Your own GitHub handle is added automatically.
+      placeholder: '@colleague'
+
+  - type: dropdown
+    id: timesensitive
+    attributes:
+      label: Time-sensitive information
+      description: Choose "Yes" if this cites specific tool versions, prices, or policies likely to date quickly (adds a "last checked" banner).
+      options:
+        - 'No'
+        - 'Yes'
+      default: 0
+    validations:
+      required: true
+
+  - type: textarea
+    id: sources
+    attributes:
+      label: Sources
+      description: Optional external references, one per line as `Title | https://...` or `[Title](https://...)`. Strongly encouraged for any figures quoted.
+      placeholder: |
+        GitHub Actions caching documentation | https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Licensing
+      options:
+        - label: I confirm this is original content (or content I have the right to republish), and I am happy for it to be published under CC BY 4.0 credited to my GitHub handle.
+          required: true
+
+  - type: textarea
+    id: content
+    attributes:
+      label: Article content (Markdown)
+      description: Write the body in Markdown starting headings at `##` (the page title is rendered automatically from Working title above). Keep nothing confidential in a draft — unlisted links are public.
+      value: |
+        ## Context
+
+        What your setup is, and what problem you were trying to address.
+
+        ## What we did
+
+        What change was made, the result, and what it cost in effort, money or disruption.
+
+        ## What didn't work
+
+        Approaches you tried and abandoned, and why.
+
+        ## What we'd do differently
+
+        Advice for someone in a similar role starting from where you started.
+    validations:
+      required: true

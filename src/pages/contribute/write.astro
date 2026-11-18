@@ -1,0 +1,1401 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getArticles, tally } from '../../lib/articles';
+import { ROLES, type Role } from '../../lib/taxonomy';
+import { url } from '../../lib/url';
+import { REPO_URL } from '../../site.config';
+
+const articles = await getArticles();
+const existingTags = tally(articles, (a) => a.data.tags);
+const roleEntries = (Object.keys(ROLES) as Role[]).map((id, index) => ({
+  id,
+  index,
+  label: ROLES[id].label,
+  description: ROLES[id].description,
+}));
+
+const defaultBody = `## Context
+
+What your setup is, and what problem you were trying to address.
+
+## What we did
+
+What change was made, the result, and what it cost in effort, money or disruption.
+
+## What didn't work
+
+Approaches you tried and abandoned, and why.
+
+## What we'd do differently
+
+Advice for someone in a similar role starting from where you started.`;
+
+const editorConfig = JSON.stringify({
+  repoUrl: REPO_URL,
+  roles: roleEntries,
+  defaultBody,
+});
+---
+
+<Base
+  title="Write a case study"
+  description="Write and preview a sustainability case study directly in your browser, then submit it as a shared draft issue or pull request."
+>
+  <div class="wrap section" id="article-editor" data-config={editorConfig}>
+    <p class="breadcrumb">
+      <a href={url('/contribute')}>Contribute</a>
+    </p>
+
+    <div class="section__head section__head--wide">
+      <div>
+        <h1>Write a case study</h1>
+        <p>
+          Fill in the fields below and preview how your article will look on the site. Your
+          work is saved automatically in this browser until you submit.
+        </p>
+      </div>
+    </div>
+
+    <div class="editor-bar">
+      <div class="editor-tabs" role="tablist" aria-label="Editor view">
+        <button
+          class="editor-tab"
+          type="button"
+          role="tab"
+          id="tab-btn-edit"
+          aria-controls="panel-edit"
+          aria-selected="true"
+          data-tab="edit"
+        >
+          1. Write
+        </button>
+        <button
+          class="editor-tab"
+          type="button"
+          role="tab"
+          id="tab-btn-preview"
+          aria-controls="panel-preview"
+          aria-selected="false"
+          data-tab="preview"
+        >
+          2. Live preview
+        </button>
+        <button
+          class="editor-tab"
+          type="button"
+          role="tab"
+          id="tab-btn-source"
+          aria-controls="panel-source"
+          aria-selected="false"
+          data-tab="source"
+        >
+          Markdown file
+        </button>
+      </div>
+
+      <div class="editor-status">
+        <span id="save-indicator" aria-live="polite">Draft saved locally</span>
+        <button class="button button--ghost" type="button" id="reset-draft-btn" style="padding:.32rem .7rem">
+          Reset form
+        </button>
+      </div>
+    </div>
+
+    {/* ── Panel 1: Form + Markdown editor ─────────────────────────────────── */}
+    <div id="panel-edit" role="tabpanel" aria-labelledby="tab-btn-edit">
+      <form class="editor-form" id="case-study-form" novalidate>
+        <div class="field">
+          <div class="field__head">
+            <label for="f-title">Working title</label>
+            <span class="field__count" id="count-title">0 / 100 (min 8)</span>
+          </div>
+          <input
+            class="text-input"
+            id="f-title"
+            type="text"
+            maxlength="100"
+            placeholder="Right-sizing CI pipelines in a research software group"
+            required
+          />
+          <div class="slug-row">
+            <label for="f-slug" style="font-weight:500; font-size:inherit">Web address:</label>
+            <code>/case-studies/</code>
+            <input id="f-slug" type="text" placeholder="your-article-name" spellcheck="false" />
+            <button
+              type="button"
+              class="md-tool"
+              id="slug-auto-btn"
+              hidden
+              title="Reset web address to match title"
+            >
+              Auto-sync from title
+            </button>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="field__head">
+            <label for="f-description">Short summary</label>
+            <span class="field__count" id="count-description">0 / 300 (min 40)</span>
+          </div>
+          <p class="field__hint">
+            One or two sentences on what you did and what a reader will take away — shown on
+            browse cards and in search results.
+          </p>
+          <textarea
+            class="textarea-input"
+            id="f-description"
+            rows="3"
+            maxlength="300"
+            placeholder="How we cut GitHub Actions runner minutes by 60% using dependency caching and path filters, and where caching actually slowed builds down."
+            required></textarea>
+        </div>
+
+        <div class="field">
+          <fieldset>
+            <div class="field__head">
+              <legend>Target role(s)</legend>
+              <span class="field__count" id="count-roles">0 / 4 selected (min 1)</span>
+            </div>
+            <p class="field__hint">Who would act on this? Pick between 1 and 4 roles.</p>
+            <div class="role-grid">
+              {
+                roleEntries.map((role) => (
+                  <label class="role-option">
+                    <input
+                      type="checkbox"
+                      name="roles"
+                      value={role.id}
+                      data-role-index={role.index}
+                    />
+                    <span>
+                      <span class="role-option__title">{role.label}</span>
+                      <span class="role-option__desc">{role.description}</span>
+                    </span>
+                  </label>
+                ))
+              }
+            </div>
+          </fieldset>
+        </div>
+
+        <div class="field">
+          <div class="field__head">
+            <label for="f-tag-input">Topic tags</label>
+            <span class="field__count" id="count-tags">0 / 8 tags (min 1)</span>
+          </div>
+          <p class="field__hint">
+            Click any <a href={url('/tags')} target="_blank" rel="noopener">existing tag</a> below to
+            reuse it, or type a new tag (spaces are converted to <code>kebab-case</code> automatically).
+          </p>
+
+          <div class="tag-selected" id="selected-tags" aria-live="polite"></div>
+
+          <div class="tag-entry">
+            <input
+              class="text-input"
+              id="f-tag-input"
+              type="text"
+              placeholder="Type a tag and press Enter (e.g. gpu-profiling)"
+            />
+            <button class="button button--ghost" type="button" id="add-tag-btn">Add tag</button>
+          </div>
+
+          {
+            existingTags.length > 0 && (
+              <div class="tag-suggestions" aria-label="Existing tags on the site">
+                <span style="font-size:0.8rem; color:var(--text-muted); margin-right:0.2rem">
+                  Existing:
+                </span>
+                {existingTags.map(({ value }) => (
+                  <button
+                    type="button"
+                    class="pill pill--button"
+                    data-suggest-tag={value}
+                    aria-pressed="false"
+                  >
+                    #{value}
+                  </button>
+                ))}
+              </div>
+            )
+          }
+        </div>
+
+        <div class="two-col">
+          <div class="field">
+            <label for="f-author">Your GitHub handle</label>
+            <p class="field__hint">
+              Credited in the byline (optional if submitting via GitHub Issue, which uses your signed-in account).
+            </p>
+            <input class="text-input" id="f-author" type="text" placeholder="@your-handle" />
+          </div>
+
+          <div class="field">
+            <label for="f-coauthors">Co-authors (optional)</label>
+            <p class="field__hint">Comma-separated GitHub handles of any co-authors.</p>
+            <input class="text-input" id="f-coauthors" type="text" placeholder="@colleague-one, @colleague-two" />
+          </div>
+        </div>
+
+        <div class="two-col">
+          <div class="field">
+            <label for="f-organisation">Organisation (optional)</label>
+            <p class="field__hint">Institution, department or facility you write from.</p>
+            <input class="text-input" id="f-organisation" type="text" placeholder="Example University" />
+          </div>
+
+          <div class="field" style="align-content:end">
+            <label class="check-row" style="padding:0.65rem 0.8rem; border:1px solid var(--border); border-radius:var(--radius); background:var(--bg-raised)">
+              <input type="checkbox" id="f-timesensitive" />
+              <span>
+                <strong style="display:block">Contains time-sensitive details</strong>
+                <span style="color:var(--text-muted); font-size:0.82rem">
+                  Tick if this cites specific software versions, prices or policies under consultation (adds a "last checked" banner).
+                </span>
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="field__head">
+            <label>External sources (optional)</label>
+          </div>
+          <p class="field__hint">
+            Strongly encouraged — especially for any energy, carbon or cost figures you quote.
+          </p>
+          <div class="source-list" id="sources-list"></div>
+          <div>
+            <button class="button button--ghost" type="button" id="add-source-btn">
+              + Add a source
+            </button>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="field__head">
+            <label for="f-body">Article content (Markdown)</label>
+            <button class="md-tool" type="button" data-switch-tab="preview">
+              Preview formatted article →
+            </button>
+          </div>
+          <p class="field__hint">
+            Start section headings at <code>##</code> (the page <code>&lt;h1&gt;</code> comes from your
+            Working title). Include specifics, costs, and anything that did not work. Keep confidential
+            material out of drafts.
+          </p>
+
+          <div>
+            <div class="md-toolbar" role="toolbar" aria-label="Markdown formatting">
+              <button class="md-tool" type="button" data-md="h2" title="Section heading (##)">## Heading</button>
+              <button class="md-tool" type="button" data-md="h3" title="Subheading (###)">### Subheading</button>
+              <button class="md-tool" type="button" data-md="bold" title="Bold text"><strong>Bold</strong></button>
+              <button class="md-tool" type="button" data-md="italic" title="Italic text"><em>Italic</em></button>
+              <button class="md-tool" type="button" data-md="code" title="Inline code"><code>`code`</code></button>
+              <button class="md-tool" type="button" data-md="codeblock" title="Fenced code block">Code block</button>
+              <button class="md-tool" type="button" data-md="link" title="Link">[Link](url)</button>
+              <button class="md-tool" type="button" data-md="list" title="Bullet list">• List</button>
+              <button class="md-tool" type="button" data-md="quote" title="Blockquote">&gt; Quote</button>
+            </div>
+            <textarea
+              class="textarea-input textarea-input--mono"
+              id="f-body"
+              spellcheck="true"></textarea>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="check-row">
+            <input type="checkbox" id="f-terms" />
+            <span>
+              I confirm this is original content (or content I have the right to republish), and I
+              am happy for it to be published under{' '}
+              <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener license">
+                CC BY 4.0
+              </a>{' '}
+              credited to my GitHub handle.
+            </span>
+          </label>
+        </div>
+      </form>
+    </div>
+
+    {/* ── Panel 2: Faithful live preview ──────────────────────────────────── */}
+    <div id="panel-preview" role="tabpanel" aria-labelledby="tab-btn-preview" hidden>
+      <div class="preview-frame">
+        <div class="article-head">
+          <div class="wrap article-head__inner stack" style="--stack-gap:.85rem">
+            <p class="breadcrumb"><span style="color:var(--accent)">Case studies</span></p>
+            <h1 id="prev-title">Untitled case study</h1>
+            <p id="prev-desc" style="color:var(--text-muted); font-size:var(--step-1)"></p>
+            <div class="byline" id="prev-byline"></div>
+            <ul class="pill-row" id="prev-pills"></ul>
+          </div>
+        </div>
+
+        <div class="wrap article-layout">
+          <article>
+            <p class="callout" id="prev-timesensitive" style="margin-bottom:1.75rem" hidden>
+              <span>
+                <strong>Time-sensitive.</strong> The author flagged this as containing details that
+                date quickly (e.g. specific software package versions).
+              </span>
+            </p>
+            <div class="prose" id="prev-body"></div>
+            <section class="prose sources" id="prev-sources-wrap" style="margin-top:3rem" hidden>
+              <h2>Sources</h2>
+              <ol id="prev-sources"></ol>
+            </section>
+          </article>
+
+          <nav class="toc" id="prev-toc-wrap" aria-label="Preview table of contents" hidden>
+            <h2>On this page</h2>
+            <ol id="prev-toc"></ol>
+          </nav>
+        </div>
+      </div>
+
+      <div class="button-row" style="margin-top:1.25rem">
+        <button class="button button--ghost" type="button" data-switch-tab="edit">
+          ← Back to editing
+        </button>
+      </div>
+    </div>
+
+    {/* ── Panel 3: Generated Markdown file ────────────────────────────────── */}
+    <div id="panel-source" role="tabpanel" aria-labelledby="tab-btn-source" hidden>
+      <div class="stack" style="--stack-gap:0.9rem; max-width:var(--measure-wide)">
+        <p style="color:var(--text-muted); font-size:var(--step--1)">
+          Target path in repository: <code id="source-filepath">content/case-studies/case-study.md</code>
+        </p>
+        <div class="button-row">
+          <button class="button button--ghost" type="button" id="copy-md-btn">
+            Copy .md contents
+          </button>
+          <button class="button button--ghost" type="button" id="download-md-btn">
+            Download .md file
+          </button>
+        </div>
+        <pre><code id="generated-md"></code></pre>
+      </div>
+    </div>
+
+    {/* ── Validation summary & browser submission options ─────────────────── */}
+    <section style="margin-top:2.5rem; padding-top:2rem; border-top:1px solid var(--border); max-width:var(--measure-wide)">
+      <h2>Submit in your browser</h2>
+      <p style="color:var(--text-muted); margin-top:0.35rem; margin-bottom:1.1rem">
+        Both options below work entirely in your browser with a free GitHub account — choose
+        whichever suits where you are in the writing process.
+      </p>
+
+      <div class="validation-box" id="validation-box" aria-live="polite"></div>
+
+      <p class="callout" id="clipboard-notice" style="margin-top:1rem" hidden></p>
+
+      <div class="method-grid">
+        <div class="method-card method-card--featured">
+          <span class="eyebrow">Recommended · Zero Git</span>
+          <h3>Draft &amp; submit via a GitHub Issue</h3>
+          <p>
+            No forks or branches needed. Opens a pre-filled GitHub Issue that you can share with
+            co-authors for discussion and edit as many times as you like — a bot validates every
+            save automatically.
+          </p>
+          <p>
+            When ready, comment <code>/publish</code> on the issue and the bot opens the final
+            pull request for maintainer review.
+          </p>
+          <div class="button-row">
+            <button class="button button--primary" type="button" id="submit-issue-btn">
+              Open pre-filled GitHub Issue →
+            </button>
+          </div>
+        </div>
+
+        <div class="method-card">
+          <span class="eyebrow">Direct Pull Request</span>
+          <h3>Open in GitHub's web file editor</h3>
+          <p>
+            Best if your article is ready now. GitHub automatically forks the repository in the
+            background and pre-fills <code>content/case-studies/&lt;slug&gt;.md</code> so you only
+            click <strong>Propose changes → Create pull request</strong>.
+          </p>
+          <label class="check-row" style="font-size:0.82rem; color:var(--text-muted)">
+            <input type="checkbox" id="f-pr-draft" />
+            <span>Submit PR as an unlisted draft (<code>draft: true</code>)</span>
+          </label>
+          <div class="button-row">
+            <button class="button button--ghost" type="button" id="submit-pr-btn">
+              Open in GitHub web editor →
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</Base>
+
+<script>
+  interface RoleConfig {
+    id: string;
+    index: number;
+    label: string;
+    description: string;
+  }
+
+  interface EditorConfig {
+    repoUrl: string;
+    roles: RoleConfig[];
+    defaultBody: string;
+  }
+
+  interface SourceItem {
+    title: string;
+    url: string;
+  }
+
+  interface StoredDraft {
+    title: string;
+    slug: string;
+    slugManual: boolean;
+    description: string;
+    roles: string[];
+    tags: string[];
+    author: string;
+    coauthors: string;
+    organisation: string;
+    timeSensitive: boolean;
+    sources: SourceItem[];
+    body: string;
+    terms: boolean;
+    prDraft: boolean;
+    draftId: string;
+  }
+
+  const STORAGE_KEY = 'dri-case-study-draft-v1';
+  const KEBAB_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+  const HANDLE_RE = /^@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,37}[a-zA-Z0-9])?$/;
+  const DRAFT_ALPHABET = 'bcdfghjkmnpqrstvwxz23456789';
+  const MAX_GITHUB_URL_LEN = 5800;
+
+  const root = document.getElementById('article-editor');
+  if (root) {
+    const config: EditorConfig = JSON.parse(root.dataset.config ?? '{}');
+    const roleLabelMap = new Map(config.roles.map((r) => [r.id, r.label]));
+    const roleIndexMap = new Map(config.roles.map((r) => [r.id, r.index]));
+
+    const titleInput = document.getElementById('f-title') as HTMLInputElement;
+    const slugInput = document.getElementById('f-slug') as HTMLInputElement;
+    const slugAutoBtn = document.getElementById('slug-auto-btn') as HTMLButtonElement;
+    const descInput = document.getElementById('f-description') as HTMLTextAreaElement;
+    const roleCheckboxes = Array.from(
+      root.querySelectorAll<HTMLInputElement>('input[name="roles"]'),
+    );
+    const tagInput = document.getElementById('f-tag-input') as HTMLInputElement;
+    const addTagBtn = document.getElementById('add-tag-btn') as HTMLButtonElement;
+    const selectedTagsEl = document.getElementById('selected-tags') as HTMLElement;
+    const suggestBtns = Array.from(
+      root.querySelectorAll<HTMLButtonElement>('[data-suggest-tag]'),
+    );
+    const authorInput = document.getElementById('f-author') as HTMLInputElement;
+    const coauthorsInput = document.getElementById('f-coauthors') as HTMLInputElement;
+    const orgInput = document.getElementById('f-organisation') as HTMLInputElement;
+    const tsInput = document.getElementById('f-timesensitive') as HTMLInputElement;
+    const sourcesListEl = document.getElementById('sources-list') as HTMLElement;
+    const addSourceBtn = document.getElementById('add-source-btn') as HTMLButtonElement;
+    const bodyInput = document.getElementById('f-body') as HTMLTextAreaElement;
+    const termsInput = document.getElementById('f-terms') as HTMLInputElement;
+    const prDraftInput = document.getElementById('f-pr-draft') as HTMLInputElement;
+
+    const countTitle = document.getElementById('count-title') as HTMLElement;
+    const countDesc = document.getElementById('count-description') as HTMLElement;
+    const countRoles = document.getElementById('count-roles') as HTMLElement;
+    const countTags = document.getElementById('count-tags') as HTMLElement;
+    const saveIndicator = document.getElementById('save-indicator') as HTMLElement;
+    const resetBtn = document.getElementById('reset-draft-btn') as HTMLButtonElement;
+    const validationBox = document.getElementById('validation-box') as HTMLElement;
+    const clipboardNotice = document.getElementById('clipboard-notice') as HTMLElement;
+    const submitIssueBtn = document.getElementById('submit-issue-btn') as HTMLButtonElement;
+    const submitPrBtn = document.getElementById('submit-pr-btn') as HTMLButtonElement;
+
+    const sourceFilepathEl = document.getElementById('source-filepath') as HTMLElement;
+    const generatedMdEl = document.getElementById('generated-md') as HTMLElement;
+    const copyMdBtn = document.getElementById('copy-md-btn') as HTMLButtonElement;
+    const downloadMdBtn = document.getElementById('download-md-btn') as HTMLButtonElement;
+
+    function randomDraftId(): string {
+      const bytes = new Uint32Array(10);
+      crypto.getRandomValues(bytes);
+      return Array.from(bytes, (b) => DRAFT_ALPHABET[b % DRAFT_ALPHABET.length]).join('');
+    }
+
+    function slugify(value: string): string {
+      return (
+        value
+          .toLowerCase()
+          .replace(/['’]/g, '')
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '')
+          .slice(0, 64)
+          .replace(/-+$/g, '') || 'your-article-name'
+      );
+    }
+
+    function normalizeTag(raw: string): string {
+      return raw
+        .trim()
+        .replace(/^#+/, '')
+        .toLowerCase()
+        .replace(/[\s_]+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-+|-+$/g, '');
+    }
+
+    function stripCodeFences(md: string): string {
+      return md
+        .replace(/^```[\s\S]*?^```\s*$/gm, '')
+        .replace(/^~~~[\s\S]*?^~~~\s*$/gm, '');
+    }
+
+    let slugManual = false;
+    let tags: string[] = [];
+    let sources: SourceItem[] = [];
+    let draftId = randomDraftId();
+
+    function loadStored(): void {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) {
+          bodyInput.value = config.defaultBody;
+          slugInput.value = 'your-article-name';
+          return;
+        }
+        const saved: Partial<StoredDraft> = JSON.parse(raw);
+        titleInput.value = saved.title ?? '';
+        slugManual = Boolean(saved.slugManual);
+        slugInput.value = saved.slug || slugify(titleInput.value);
+        slugAutoBtn.hidden = !slugManual;
+        descInput.value = saved.description ?? '';
+        const savedRoles = new Set(saved.roles ?? []);
+        for (const cb of roleCheckboxes) cb.checked = savedRoles.has(cb.value);
+        tags = Array.isArray(saved.tags) ? saved.tags.filter((t) => KEBAB_RE.test(t)).slice(0, 8) : [];
+        authorInput.value = saved.author ?? '';
+        coauthorsInput.value = saved.coauthors ?? '';
+        orgInput.value = saved.organisation ?? '';
+        tsInput.checked = Boolean(saved.timeSensitive);
+        sources = Array.isArray(saved.sources) ? saved.sources : [];
+        bodyInput.value = typeof saved.body === 'string' ? saved.body : config.defaultBody;
+        termsInput.checked = Boolean(saved.terms);
+        prDraftInput.checked = Boolean(saved.prDraft);
+        if (saved.draftId && /^[a-z0-9]{6,16}$/.test(saved.draftId)) {
+          draftId = saved.draftId;
+        }
+      } catch {
+        bodyInput.value = config.defaultBody;
+        slugInput.value = 'your-article-name';
+      }
+    }
+
+    function persist(): void {
+      const data: StoredDraft = {
+        title: titleInput.value,
+        slug: slugInput.value,
+        slugManual,
+        description: descInput.value,
+        roles: roleCheckboxes.filter((c) => c.checked).map((c) => c.value),
+        tags,
+        author: authorInput.value,
+        coauthors: coauthorsInput.value,
+        organisation: orgInput.value,
+        timeSensitive: tsInput.checked,
+        sources,
+        body: bodyInput.value,
+        terms: termsInput.checked,
+        prDraft: prDraftInput.checked,
+        draftId,
+      };
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        saveIndicator.textContent = 'Draft saved locally';
+      } catch {
+        saveIndicator.textContent = 'Local storage full';
+      }
+    }
+
+    function renderTags(): void {
+      selectedTagsEl.innerHTML = '';
+      for (const t of tags) {
+        const chip = document.createElement('span');
+        chip.className = 'tag-chip';
+        chip.textContent = `#${t} `;
+        const rm = document.createElement('button');
+        rm.type = 'button';
+        rm.setAttribute('aria-label', `Remove tag ${t}`);
+        rm.textContent = '×';
+        rm.addEventListener('click', () => {
+          tags = tags.filter((x) => x !== t);
+          renderTags();
+          refreshAll();
+        });
+        chip.appendChild(rm);
+        selectedTagsEl.appendChild(chip);
+      }
+      for (const btn of suggestBtns) {
+        const val = btn.dataset.suggestTag ?? '';
+        btn.setAttribute('aria-pressed', String(tags.includes(val)));
+      }
+    }
+
+    function addTagsFromInput(): void {
+      const parts = tagInput.value.split(/[,\s]+/).map(normalizeTag).filter(Boolean);
+      for (const p of parts) {
+        if (KEBAB_RE.test(p) && !tags.includes(p) && tags.length < 8) {
+          tags.push(p);
+        }
+      }
+      tagInput.value = '';
+      renderTags();
+      refreshAll();
+    }
+
+    function renderSources(): void {
+      sourcesListEl.innerHTML = '';
+      sources.forEach((src, idx) => {
+        const row = document.createElement('div');
+        row.className = 'source-row';
+
+        const titleEl = document.createElement('input');
+        titleEl.type = 'text';
+        titleEl.className = 'text-input';
+        titleEl.placeholder = 'Source title (e.g. NVIDIA Nsight Compute docs)';
+        titleEl.value = src.title;
+        titleEl.setAttribute('aria-label', `Source ${idx + 1} title`);
+        titleEl.addEventListener('input', () => {
+          sources[idx].title = titleEl.value;
+          refreshAll();
+        });
+
+        const urlEl = document.createElement('input');
+        urlEl.type = 'url';
+        urlEl.className = 'text-input';
+        urlEl.placeholder = 'https://...';
+        urlEl.value = src.url;
+        urlEl.setAttribute('aria-label', `Source ${idx + 1} URL`);
+        urlEl.addEventListener('input', () => {
+          sources[idx].url = urlEl.value;
+          refreshAll();
+        });
+
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'button button--ghost';
+        removeBtn.textContent = 'Remove';
+        removeBtn.addEventListener('click', () => {
+          sources.splice(idx, 1);
+          renderSources();
+          refreshAll();
+        });
+
+        row.append(titleEl, urlEl, removeBtn);
+        sourcesListEl.appendChild(row);
+      });
+    }
+
+    function setCounterState(el: HTMLElement, text: string, ok: boolean, empty: boolean): void {
+      el.textContent = text;
+      el.classList.toggle('field__count--ok', ok);
+      el.classList.toggle('field__count--bad', !ok && !empty);
+    }
+
+    function collectAuthors(): { primary: string; coauthors: string[]; all: string[]; badHandles: string[] } {
+      const badHandles: string[] = [];
+      const norm = (raw: string): string => {
+        const trimmed = raw.trim();
+        if (!trimmed) return '';
+        return trimmed.startsWith('@') ? trimmed : `@${trimmed}`;
+      };
+      const primary = norm(authorInput.value);
+      if (primary && !HANDLE_RE.test(primary)) badHandles.push(authorInput.value.trim());
+
+      const coauthors: string[] = [];
+      const seen = new Set(primary ? [primary.toLowerCase()] : []);
+      for (const tok of coauthorsInput.value.split(/[,\s]+/).filter(Boolean)) {
+        const h = norm(tok);
+        if (!HANDLE_RE.test(h)) {
+          badHandles.push(tok);
+          continue;
+        }
+        if (!seen.has(h.toLowerCase())) {
+          seen.add(h.toLowerCase());
+          coauthors.push(h);
+        }
+      }
+      const all = primary ? [primary, ...coauthors] : coauthors;
+      return { primary, coauthors, all, badHandles };
+    }
+
+    function validateState() {
+      const commonErrors: string[] = [];
+      const prExtraErrors: string[] = [];
+
+      const title = titleInput.value.trim().replace(/\s+/g, ' ');
+      const titleOk = title.length >= 8 && title.length <= 100;
+      setCounterState(countTitle, `${title.length} / 100 (min 8)`, titleOk, title.length === 0);
+      if (!titleOk) commonErrors.push('Working title must be 8–100 characters.');
+
+      const slug = slugInput.value.trim();
+      if (!KEBAB_RE.test(slug)) {
+        commonErrors.push('Web address slug must be lowercase letters, numbers and single hyphens.');
+      }
+
+      const desc = descInput.value.trim().replace(/\s+/g, ' ');
+      const descOk = desc.length >= 40 && desc.length <= 300;
+      setCounterState(countDesc, `${desc.length} / 300 (min 40)`, descOk, desc.length === 0);
+      if (!descOk) commonErrors.push('Short summary must be 40–300 characters.');
+
+      const selectedRoles = roleCheckboxes.filter((c) => c.checked).map((c) => c.value);
+      const rolesOk = selectedRoles.length >= 1 && selectedRoles.length <= 4;
+      setCounterState(
+        countRoles,
+        `${selectedRoles.length} / 4 selected (min 1)`,
+        rolesOk,
+        selectedRoles.length === 0,
+      );
+      if (!rolesOk) commonErrors.push('Select between 1 and 4 target roles.');
+
+      const tagsOk = tags.length >= 1 && tags.length <= 8;
+      setCounterState(countTags, `${tags.length} / 8 tags (min 1)`, tagsOk, tags.length === 0);
+      if (!tagsOk) commonErrors.push('Add between 1 and 8 topic tags.');
+
+      const authors = collectAuthors();
+      for (const bad of authors.badHandles) {
+        commonErrors.push(`GitHub handle "${bad}" is not valid (use letters, digits and hyphens).`);
+      }
+      if (authors.all.length === 0) {
+        prExtraErrors.push('Add your GitHub handle (required when opening a Pull Request directly).');
+      }
+
+      const validSources: SourceItem[] = [];
+      sources.forEach((s, idx) => {
+        const t = s.title.trim();
+        const u = s.url.trim();
+        if (!t && !u) return;
+        if (!t || !u) {
+          commonErrors.push(`Source #${idx + 1} needs both a title and a URL.`);
+          return;
+        }
+        try {
+          const parsed = new URL(u);
+          if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+            commonErrors.push(`Source #${idx + 1} URL must start with https:// or http://.`);
+            return;
+          }
+          validSources.push({ title: t, url: parsed.href });
+        } catch {
+          commonErrors.push(`Source #${idx + 1} URL "${u}" is not valid.`);
+        }
+      });
+
+      const body = bodyInput.value.trim();
+      const stripped = stripCodeFences(body);
+      if (body.length < 40) {
+        commonErrors.push('Write at least a short draft in the Article content box.');
+      }
+      if (/^#\s+\S/m.test(stripped)) {
+        commonErrors.push(
+          'Start section headings in the body at ## rather than # (the page title is rendered automatically).',
+        );
+      }
+      const withoutCodeAndAutolinks = stripped
+        .replace(/(`+)[\s\S]*?\1/g, '')
+        .replace(/<https?:\/\/[^>\s]+>/gi, '');
+      if (/<(?:!--|\/?[a-zA-Z][a-zA-Z0-9:-]*(?:[\s/>]|$))/.test(withoutCodeAndAutolinks)) {
+        commonErrors.push(
+          'Raw HTML tags are not permitted — use Markdown, and wrap code or <angle-brackets> in backticks (`...`).',
+        );
+      }
+      if (/javascript\s*:/i.test(withoutCodeAndAutolinks)) {
+        commonErrors.push('Remove javascript: links from the body.');
+      }
+
+      if (!termsInput.checked) {
+        commonErrors.push('Tick the CC BY 4.0 licensing confirmation checkbox.');
+      }
+
+      return {
+        title,
+        slug,
+        desc,
+        selectedRoles,
+        authors,
+        organisation: orgInput.value.trim().replace(/\s+/g, ' '),
+        timeSensitive: tsInput.checked,
+        validSources,
+        body,
+        isDraftPr: prDraftInput.checked,
+        commonErrors,
+        prExtraErrors,
+      };
+    }
+
+    function buildMarkdownFile(state: ReturnType<typeof validateState>): string {
+      const today = new Date().toISOString().slice(0, 10);
+      const authorList = state.authors.all.length > 0 ? state.authors.all : ['@your-handle'];
+      const lines = ['---'];
+      lines.push(`title: ${JSON.stringify(state.title || 'Untitled case study')}`);
+      lines.push(`description: ${JSON.stringify(state.desc || '')}`);
+      lines.push('roles:');
+      for (const r of state.selectedRoles) lines.push(`  - ${r}`);
+      lines.push('tags:');
+      for (const t of tags) lines.push(`  - ${t}`);
+      if (authorList.length === 1) {
+        lines.push(`author: ${JSON.stringify(authorList[0])}`);
+      } else {
+        lines.push('author:');
+        for (const a of authorList) lines.push(`  - ${JSON.stringify(a)}`);
+      }
+      if (state.organisation) {
+        lines.push(`organisation: ${JSON.stringify(state.organisation)}`);
+      }
+      lines.push(`date: ${today}`);
+      lines.push(`timeSensitive: ${state.timeSensitive}`);
+      if (state.validSources.length === 0) {
+        lines.push('sources: []');
+      } else {
+        lines.push('sources:');
+        for (const s of state.validSources) {
+          lines.push(`  - title: ${JSON.stringify(s.title)}`);
+          lines.push(`    url: ${JSON.stringify(s.url)}`);
+        }
+      }
+      lines.push(`draft: ${state.isDraftPr}`);
+      if (state.isDraftPr) {
+        lines.push(`draftId: ${JSON.stringify(draftId)}`);
+      }
+      lines.push('---', '', state.body, '');
+      return lines.join('\n');
+    }
+
+    function escapeHtml(str: string): string {
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function renderInlineMd(raw: string): string {
+      const codeSlots: string[] = [];
+      let text = escapeHtml(raw).replace(/`([^`]+)`/g, (_m, code: string) => {
+        const idx = codeSlots.push(`<code>${code}</code>`) - 1;
+        return `\u0000CODE${idx}\u0000`;
+      });
+
+      text = text.replace(
+        /\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g,
+        '<a href="$2" target="_blank" rel="noopener">$1</a>',
+      );
+      text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+      text = text.replace(/(^|[\s(])\*([^*]+)\*(?=[\s).,!?:;]|$)/g, '$1<em>$2</em>');
+
+      return text.replace(/\u0000CODE(\d+)\u0000/g, (_m, i: string) => codeSlots[Number(i)] ?? '');
+    }
+
+    function renderMarkdownPreview(md: string): {
+      html: string;
+      headings: { depth: number; text: string; slug: string }[];
+    } {
+      const lines = md.replace(/\r\n/g, '\n').split('\n');
+      const out: string[] = [];
+      const headings: { depth: number; text: string; slug: string }[] = [];
+      let i = 0;
+
+      while (i < lines.length) {
+        const line = lines[i];
+
+        if (!line.trim()) {
+          i++;
+          continue;
+        }
+
+        const fence = /^(```|~~~)(.*)$/.exec(line.trim());
+        if (fence) {
+          const marker = fence[1];
+          const codeLines: string[] = [];
+          i++;
+          while (i < lines.length && !lines[i].trim().startsWith(marker)) {
+            codeLines.push(escapeHtml(lines[i]));
+            i++;
+          }
+          i++;
+          out.push(`<pre><code>${codeLines.join('\n')}</code></pre>`);
+          continue;
+        }
+
+        const hMatch = /^(#{1,4})\s+(.+)$/.exec(line);
+        if (hMatch) {
+          const depth = hMatch[1].length;
+          const text = hMatch[2].trim();
+          const slug = `preview-${slugify(text)}-${headings.length}`;
+          if (depth === 2 || depth === 3) {
+            headings.push({ depth, text, slug });
+          }
+          out.push(`<h${depth} id="${slug}">${renderInlineMd(text)}</h${depth}>`);
+          i++;
+          continue;
+        }
+
+        if (/^(-{3,}|\*{3,}|_{3,})\s*$/.test(line.trim())) {
+          out.push('<hr />');
+          i++;
+          continue;
+        }
+
+        if (line.trim().startsWith('>')) {
+          const quoteLines: string[] = [];
+          while (i < lines.length && lines[i].trim().startsWith('>')) {
+            quoteLines.push(lines[i].replace(/^\s*>\s?/, ''));
+            i++;
+          }
+          out.push(`<blockquote><p>${quoteLines.map(renderInlineMd).join('<br />')}</p></blockquote>`);
+          continue;
+        }
+
+        if (/^\s*[-*+]\s+/.test(line)) {
+          const items: string[] = [];
+          while (i < lines.length && /^\s*[-*+]\s+/.test(lines[i])) {
+            items.push(`<li>${renderInlineMd(lines[i].replace(/^\s*[-*+]\s+/, ''))}</li>`);
+            i++;
+          }
+          out.push(`<ul>${items.join('')}</ul>`);
+          continue;
+        }
+
+        if (/^\s*\d+\.\s+/.test(line)) {
+          const items: string[] = [];
+          while (i < lines.length && /^\s*\d+\.\s+/.test(lines[i])) {
+            items.push(`<li>${renderInlineMd(lines[i].replace(/^\s*\d+\.\s+/, ''))}</li>`);
+            i++;
+          }
+          out.push(`<ol>${items.join('')}</ol>`);
+          continue;
+        }
+
+        const paraLines: string[] = [];
+        while (
+          i < lines.length &&
+          lines[i].trim() &&
+          !/^(#{1,4}\s|```|~~~|>\s?|[-*+]\s|\d+\.\s)/.test(lines[i].trim())
+        ) {
+          paraLines.push(renderInlineMd(lines[i].trim()));
+          i++;
+        }
+        out.push(`<p>${paraLines.join(' ')}</p>`);
+      }
+
+      return { html: out.join('\n'), headings };
+    }
+
+    function updatePreview(state: ReturnType<typeof validateState>): void {
+      const prevTitle = document.getElementById('prev-title') as HTMLElement;
+      const prevDesc = document.getElementById('prev-desc') as HTMLElement;
+      const prevByline = document.getElementById('prev-byline') as HTMLElement;
+      const prevPills = document.getElementById('prev-pills') as HTMLElement;
+      const prevTs = document.getElementById('prev-timesensitive') as HTMLElement;
+      const prevBody = document.getElementById('prev-body') as HTMLElement;
+      const prevSourcesWrap = document.getElementById('prev-sources-wrap') as HTMLElement;
+      const prevSources = document.getElementById('prev-sources') as HTMLElement;
+      const prevTocWrap = document.getElementById('prev-toc-wrap') as HTMLElement;
+      const prevToc = document.getElementById('prev-toc') as HTMLElement;
+
+      prevTitle.textContent = state.title || 'Untitled case study';
+      prevDesc.textContent = state.desc || 'Your short summary will appear here.';
+
+      const dateFormatted = new Date().toLocaleDateString('en-GB', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
+      const authorDisplay =
+        state.authors.all.length > 0 ? state.authors.all.join(', ') : '@your-github-handle';
+      prevByline.innerHTML = '';
+      const authorSpan = document.createElement('span');
+      const strong = document.createElement('strong');
+      strong.textContent = authorDisplay;
+      authorSpan.appendChild(strong);
+      prevByline.appendChild(authorSpan);
+
+      if (state.organisation) {
+        const orgSpan = document.createElement('span');
+        orgSpan.textContent = state.organisation;
+        prevByline.appendChild(orgSpan);
+      }
+      const dot = document.createElement('span');
+      dot.textContent = '·';
+      const timeEl = document.createElement('time');
+      timeEl.textContent = dateFormatted;
+      prevByline.append(dot, timeEl);
+
+      prevPills.innerHTML = '';
+      for (const r of state.selectedRoles) {
+        const li = document.createElement('li');
+        const span = document.createElement('span');
+        span.className = 'pill';
+        span.textContent = roleLabelMap.get(r) ?? r;
+        li.appendChild(span);
+        prevPills.appendChild(li);
+      }
+      for (const t of tags) {
+        const li = document.createElement('li');
+        const span = document.createElement('span');
+        span.className = 'pill';
+        span.textContent = `#${t}`;
+        li.appendChild(span);
+        prevPills.appendChild(li);
+      }
+
+      prevTs.hidden = !state.timeSensitive;
+
+      const { html, headings } = renderMarkdownPreview(state.body);
+      prevBody.innerHTML = html;
+
+      prevSourcesWrap.hidden = state.validSources.length === 0;
+      prevSources.innerHTML = '';
+      for (const s of state.validSources) {
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.href = s.url;
+        a.target = '_blank';
+        a.rel = 'noopener';
+        a.textContent = s.title;
+        li.appendChild(a);
+        prevSources.appendChild(li);
+      }
+
+      prevTocWrap.hidden = headings.length <= 1;
+      prevToc.innerHTML = '';
+      for (const h of headings) {
+        const li = document.createElement('li');
+        li.dataset.depth = String(h.depth);
+        const a = document.createElement('a');
+        a.href = `#${h.slug}`;
+        a.textContent = h.text;
+        li.appendChild(a);
+        prevToc.appendChild(li);
+      }
+    }
+
+    function refreshAll(): void {
+      const state = validateState();
+      const md = buildMarkdownFile(state);
+
+      sourceFilepathEl.textContent = `content/case-studies/${state.slug}.md`;
+      generatedMdEl.textContent = md;
+      updatePreview(state);
+
+      const issueReady = state.commonErrors.length === 0;
+      const prReady = issueReady && state.prExtraErrors.length === 0;
+
+      submitIssueBtn.disabled = !issueReady;
+      submitPrBtn.disabled = !prReady;
+
+      validationBox.innerHTML = '';
+      validationBox.classList.toggle('validation-box--ok', issueReady);
+
+      if (issueReady) {
+        const p = document.createElement('p');
+        p.innerHTML = '<strong>✓ Ready to submit.</strong> All required fields pass validation.';
+        validationBox.appendChild(p);
+        if (state.prExtraErrors.length > 0) {
+          const note = document.createElement('p');
+          note.style.marginTop = '0.35rem';
+          note.style.color = 'var(--text-muted)';
+          note.textContent = `Note: ${state.prExtraErrors.join(' ')}`;
+          validationBox.appendChild(note);
+        }
+      } else {
+        const p = document.createElement('p');
+        p.innerHTML = '<strong>Complete the following before submitting:</strong>';
+        const ul = document.createElement('ul');
+        for (const err of state.commonErrors) {
+          const li = document.createElement('li');
+          li.textContent = err;
+          ul.appendChild(li);
+        }
+        validationBox.append(p, ul);
+      }
+
+      persist();
+    }
+
+    // Tab switching
+    const tabBtns = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-tab]'));
+    const panels: Record<string, HTMLElement> = {
+      edit: document.getElementById('panel-edit') as HTMLElement,
+      preview: document.getElementById('panel-preview') as HTMLElement,
+      source: document.getElementById('panel-source') as HTMLElement,
+    };
+
+    function activateTab(name: string): void {
+      for (const btn of tabBtns) {
+        const active = btn.dataset.tab === name;
+        btn.setAttribute('aria-selected', String(active));
+      }
+      for (const [key, panel] of Object.entries(panels)) {
+        panel.hidden = key !== name;
+      }
+    }
+
+    for (const btn of tabBtns) {
+      btn.addEventListener('click', () => activateTab(btn.dataset.tab ?? 'edit'));
+    }
+    for (const jump of root.querySelectorAll<HTMLButtonElement>('[data-switch-tab]')) {
+      jump.addEventListener('click', () => {
+        activateTab(jump.dataset.switchTab ?? 'edit');
+        root.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
+
+    // Title -> Slug auto-sync
+    titleInput.addEventListener('input', () => {
+      if (!slugManual) {
+        slugInput.value = slugify(titleInput.value);
+      }
+      refreshAll();
+    });
+
+    slugInput.addEventListener('input', () => {
+      slugManual = true;
+      slugAutoBtn.hidden = false;
+      refreshAll();
+    });
+
+    slugAutoBtn.addEventListener('click', () => {
+      slugManual = false;
+      slugAutoBtn.hidden = true;
+      slugInput.value = slugify(titleInput.value);
+      refreshAll();
+    });
+
+    // Tags input & suggestions
+    addTagBtn.addEventListener('click', addTagsFromInput);
+    tagInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ',') {
+        e.preventDefault();
+        addTagsFromInput();
+      }
+    });
+    for (const btn of suggestBtns) {
+      btn.addEventListener('click', () => {
+        const val = btn.dataset.suggestTag ?? '';
+        if (!val) return;
+        if (tags.includes(val)) {
+          tags = tags.filter((t) => t !== val);
+        } else if (tags.length < 8) {
+          tags.push(val);
+        }
+        renderTags();
+        refreshAll();
+      });
+    }
+
+    addSourceBtn.addEventListener('click', () => {
+      sources.push({ title: '', url: '' });
+      renderSources();
+      refreshAll();
+    });
+
+    // Markdown toolbar helpers
+    for (const tool of root.querySelectorAll<HTMLButtonElement>('[data-md]')) {
+      tool.addEventListener('click', () => {
+        const start = bodyInput.selectionStart;
+        const end = bodyInput.selectionEnd;
+        const selected = bodyInput.value.slice(start, end);
+        let replacement = '';
+        switch (tool.dataset.md) {
+          case 'h2':
+            replacement = `\n## ${selected || 'Section heading'}\n`;
+            break;
+          case 'h3':
+            replacement = `\n### ${selected || 'Subheading'}\n`;
+            break;
+          case 'bold':
+            replacement = `**${selected || 'bold text'}**`;
+            break;
+          case 'italic':
+            replacement = `*${selected || 'italic text'}*`;
+            break;
+          case 'code':
+            replacement = `\`${selected || 'code'}\``;
+            break;
+          case 'codeblock':
+            replacement = `\n\`\`\`bash\n${selected || '# command or snippet'}\n\`\`\`\n`;
+            break;
+          case 'link':
+            replacement = `[${selected || 'link text'}](https://example.org)`;
+            break;
+          case 'list':
+            replacement = `\n- ${selected || 'List item'}\n`;
+            break;
+          case 'quote':
+            replacement = `\n> ${selected || 'Quoted note'}\n`;
+            break;
+        }
+        bodyInput.setRangeText(replacement, start, end, 'end');
+        bodyInput.focus();
+        refreshAll();
+      });
+    }
+
+    for (const el of [
+      descInput,
+      authorInput,
+      coauthorsInput,
+      orgInput,
+      tsInput,
+      bodyInput,
+      termsInput,
+      prDraftInput,
+      ...roleCheckboxes,
+    ]) {
+      el.addEventListener('input', refreshAll);
+      el.addEventListener('change', refreshAll);
+    }
+
+    // Reset button
+    resetBtn.addEventListener('click', () => {
+      if (!confirm('Clear your current draft from this browser and restore the starter template?')) {
+        return;
+      }
+      localStorage.removeItem(STORAGE_KEY);
+      titleInput.value = '';
+      slugManual = false;
+      slugAutoBtn.hidden = true;
+      slugInput.value = 'your-article-name';
+      descInput.value = '';
+      for (const cb of roleCheckboxes) cb.checked = false;
+      tags = [];
+      authorInput.value = '';
+      coauthorsInput.value = '';
+      orgInput.value = '';
+      tsInput.checked = false;
+      sources = [];
+      bodyInput.value = config.defaultBody;
+      termsInput.checked = false;
+      prDraftInput.checked = false;
+      draftId = randomDraftId();
+      clipboardNotice.hidden = true;
+      renderTags();
+      renderSources();
+      refreshAll();
+    });
+
+    // Copy / Download Markdown
+    copyMdBtn.addEventListener('click', async () => {
+      const md = buildMarkdownFile(validateState());
+      await navigator.clipboard.writeText(md);
+      const prev = copyMdBtn.textContent;
+      copyMdBtn.textContent = '✓ Copied!';
+      setTimeout(() => {
+        copyMdBtn.textContent = prev;
+      }, 2000);
+    });
+
+    downloadMdBtn.addEventListener('click', () => {
+      const state = validateState();
+      const md = buildMarkdownFile(state);
+      const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+      const dlUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = dlUrl;
+      a.download = `${state.slug}.md`;
+      a.click();
+      URL.revokeObjectURL(dlUrl);
+    });
+
+    function showClipboardNotice(msg: string): void {
+      clipboardNotice.textContent = msg;
+      clipboardNotice.hidden = false;
+    }
+
+    // Submit Path 1: Pre-filled GitHub Issue ("Drafts under the hood")
+    submitIssueBtn.addEventListener('click', async () => {
+      const state = validateState();
+      if (state.commonErrors.length > 0) return;
+
+      const roleIndexes = state.selectedRoles
+        .map((id) => roleIndexMap.get(id))
+        .filter((n): n is number => typeof n === 'number')
+        .join(',');
+
+      const sourcesText = state.validSources.map((s) => `${s.title} | ${s.url}`).join('\n');
+      const coauthorsText = state.authors.coauthors.join(', ');
+
+      const buildIssueUrl = (includeBody: boolean): string => {
+        const params = new URLSearchParams();
+        params.set('template', 'submit-article.yml');
+        params.set('title', `[Draft] ${state.title}`);
+        params.set('article_title', state.title);
+        params.set('description', state.desc);
+        if (roleIndexes) params.set('roles', roleIndexes);
+        params.set('tags', tags.join(', '));
+        if (state.organisation) params.set('organisation', state.organisation);
+        if (coauthorsText) params.set('coauthors', coauthorsText);
+        params.set('timesensitive', state.timeSensitive ? 'Yes' : 'No');
+        if (sourcesText) params.set('sources', sourcesText);
+        params.set('terms', '0');
+        if (includeBody) params.set('content', state.body);
+        return `${config.repoUrl}/issues/new?${params.toString()}`;
+      };
+
+      const fullUrl = buildIssueUrl(true);
+      if (fullUrl.length <= MAX_GITHUB_URL_LEN) {
+        clipboardNotice.hidden = true;
+        window.open(fullUrl, '_blank', 'noopener');
+      } else {
+        await navigator.clipboard.writeText(state.body);
+        showClipboardNotice(
+          'Your article body is long enough to exceed browser URL limits, so we copied your Markdown content to the clipboard and pre-filled all other fields — paste (Ctrl+V / Cmd+V) into the "Article content (Markdown)" box on GitHub.',
+        );
+        window.open(buildIssueUrl(false), '_blank', 'noopener');
+      }
+    });
+
+    // Submit Path 2: Pre-filled GitHub `/new/main` web file creator
+    submitPrBtn.addEventListener('click', async () => {
+      const state = validateState();
+      if (state.commonErrors.length > 0 || state.prExtraErrors.length > 0) return;
+
+      const md = buildMarkdownFile(state);
+      const commitMsg = state.isDraftPr
+        ? `Add draft case study: ${state.title}`
+        : `Add case study: ${state.title}`;
+
+      const buildNewFileUrl = (includeValue: boolean): string => {
+        const params = new URLSearchParams();
+        params.set('filename', `content/case-studies/${state.slug}.md`);
+        params.set('message', commitMsg);
+        if (includeValue) params.set('value', md);
+        return `${config.repoUrl}/new/main?${params.toString()}`;
+      };
+
+      const fullUrl = buildNewFileUrl(true);
+      if (fullUrl.length <= MAX_GITHUB_URL_LEN) {
+        clipboardNotice.hidden = true;
+        window.open(fullUrl, '_blank', 'noopener');
+      } else {
+        await navigator.clipboard.writeText(md);
+        showClipboardNotice(
+          'Your generated .md file exceeds browser URL limits, so we copied the complete file to your clipboard — paste (Ctrl+V / Cmd+V) into the GitHub editor tab that just opened, then click "Propose changes".',
+        );
+        window.open(buildNewFileUrl(false), '_blank', 'noopener');
+      }
+    });
+
+    loadStored();
+    renderTags();
+    renderSources();
+    refreshAll();
+  }
+</script>

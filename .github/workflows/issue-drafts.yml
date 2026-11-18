@@ -1,0 +1,83 @@
+name: Issue Drafts
+
+# Validates case study drafts submitted via `.github/ISSUE_TEMPLATE/submit-article.yml`
+# and opens a review Pull Request when the author (or a maintainer) comments `/publish`.
+#
+# Security guarantees:
+#   - Never commits directly to `main` (`main` only changes via maintainer PR merge).
+#   - Pre-publish issue checks run with `contents: read` and without `npm ci`.
+#   - Recommended repository setting so `/publish` opens PRs directly:
+#     Settings → Actions → General → Workflow permissions →
+#     ✓ Allow GitHub Actions to create and approve pull requests
+
+on:
+  issues:
+    types: [opened, edited]
+  issue_comment:
+    types: [created]
+
+concurrency:
+  group: issue-draft-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Validate draft issue
+    if: >-
+      github.event_name == 'issues' &&
+      !github.event.issue.pull_request &&
+      github.event.issue.state == 'open' &&
+      (
+        contains(github.event.issue.labels.*.name, 'article-draft') ||
+        contains(github.event.issue.body, '### Article content (Markdown)')
+      )
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Check draft fields and Markdown
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/issue-draft.mjs --validate-only
+
+  publish:
+    name: Open publication pull request
+    if: >-
+      github.event_name == 'issue_comment' &&
+      !github.event.issue.pull_request &&
+      github.event.issue.state == 'open' &&
+      contains(github.event.comment.body, '/publish') &&
+      (
+        contains(github.event.issue.labels.*.name, 'article-draft') ||
+        contains(github.event.issue.body, '### Article content (Markdown)')
+      )
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build and open publication PR
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/issue-draft.mjs --publish

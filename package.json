@@ -13,8 +13,10 @@
     "preview": "astro preview",
     "check": "astro check",
     "check:links": "node scripts/check-links.mjs",
+    "check:roles": "node scripts/sync-issue-templates.mjs",
+    "sync:roles": "node scripts/sync-issue-templates.mjs --write",
     "draft:id": "node scripts/draft-id.mjs",
-    "validate": "npm run check && npm run build && npm run check:links",
+    "validate": "npm run check:roles && npm run check && npm run build && npm run check:links",
     "astro": "astro"
   },
   "dependencies": {

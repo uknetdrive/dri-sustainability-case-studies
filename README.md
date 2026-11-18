@@ -17,7 +17,9 @@ This resource was created as part of the NetDRIVE Community Project EMIT, which 
 ## How it works
 
 - Articles live in `content/case-studies/` as Markdown with a YAML header.
-- Comments on each article are GitHub Discussions
+- Contributors can write and preview articles in the browser at `/contribute/write`, then submit either via a **draft GitHub Issue** (`.github/ISSUE_TEMPLATE/submit-article.yml` + `.github/workflows/issue-drafts.yml`) or GitHub's web file editor.
+- Draft issues never commit to `main`: edits are validated automatically, and commenting `/publish` opens a review PR (`main` only changes when a maintainer merges a PR).
+- Comments on each article are GitHub Discussions.
 
 ## Local development
 
@@ -47,7 +49,7 @@ scripts/check-links.mjs Post-build internal link check
 
 ## Adding a role
 
-Roles are a fixed set, defined in [`src/lib/taxonomy.ts`](src/lib/taxonomy.ts).
+Roles are a fixed set, defined in [`src/lib/taxonomy.ts`](src/lib/taxonomy.ts). After editing that file, run `npm run sync:roles` to update the checkboxes in `.github/ISSUE_TEMPLATE/*.yml`.
 
 ## Licence
 
